@@ -13,9 +13,9 @@ public class Responsavel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
+    @NotBlank(message = "O nome do responsável é obrigatório")
     private String nome;
 
-    @NotBlank
+    @NotBlank (message = "O telefone do responsável é obrigatório")
     private String telefone;
 }
