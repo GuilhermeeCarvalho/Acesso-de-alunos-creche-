@@ -1,5 +1,6 @@
 package com.univille.AccessControl.model;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 @Entity
@@ -13,5 +14,6 @@ public class Funcionario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank(message = "O nome do funcionário é obrigatório")
     private String nome;
 }
