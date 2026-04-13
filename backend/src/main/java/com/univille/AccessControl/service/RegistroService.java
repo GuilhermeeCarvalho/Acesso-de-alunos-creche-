@@ -42,6 +42,18 @@ public class RegistroService {
         Funcionario funcionario = funcionarioRepository.findById(request.getFuncionarioId())
                 .orElseThrow(() -> new RuntimeException("Funcionário não encontrado"));
 
+        registroRepository.findTopByCriancaIdOrderByDataHoraDesc(crianca.getId())
+                .ifPresent(ultimo -> {
+
+                    if (tipo == TipoRegistro.ENTRADA && ultimo.getTipo() == TipoRegistro.ENTRADA) {
+                        throw new RuntimeException("Já existe uma entrada sem saída para essa criança");
+                    }
+
+                    if (tipo == TipoRegistro.SAIDA && ultimo.getTipo() == TipoRegistro.SAIDA) {
+                        throw new RuntimeException("Já existe uma saída registrada. Entrada não encontrada");
+                    }
+                });
+
         Registro registro = new Registro();
         registro.setCrianca(crianca);
         registro.setResponsavel(responsavel);
