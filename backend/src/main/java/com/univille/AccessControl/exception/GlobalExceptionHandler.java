@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -21,5 +22,17 @@ public class GlobalExceptionHandler {
         });
 
         return erros;
+    }
+
+    @ExceptionHandler(RegraNegocioException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErroResponse handleRegraNegocio(RegraNegocioException ex) {
+
+        return ErroResponse.builder()
+                .erro("REGRA_NEGOCIO")
+                .mensagem(ex.getMessage())
+                .status(400)
+                .dataHora(LocalDateTime.now())
+                .build();
     }
 }

@@ -1,6 +1,7 @@
 package com.univille.AccessControl.service;
 
 import com.univille.AccessControl.dto.RegistroRequest;
+import com.univille.AccessControl.exception.RegraNegocioException;
 import com.univille.AccessControl.model.*;
 import com.univille.AccessControl.repository.*;
 import org.springframework.stereotype.Service;
@@ -46,11 +47,11 @@ public class RegistroService {
                 .ifPresent(ultimo -> {
 
                     if (tipo == TipoRegistro.ENTRADA && ultimo.getTipo() == TipoRegistro.ENTRADA) {
-                        throw new RuntimeException("Já existe uma entrada sem saída para essa criança");
+                        throw new RegraNegocioException("Já existe uma entrada sem saída para essa criança");
                     }
 
                     if (tipo == TipoRegistro.SAIDA && ultimo.getTipo() == TipoRegistro.SAIDA) {
-                        throw new RuntimeException("Já existe uma saída registrada. Entrada não encontrada");
+                        throw new RegraNegocioException("Já existe uma saída registrada. Entrada não encontrada");
                     }
                 });
 
