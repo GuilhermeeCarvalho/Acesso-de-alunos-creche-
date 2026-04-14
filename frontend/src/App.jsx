@@ -1,35 +1,25 @@
-import { useState } from 'react'
-import './App.css'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+
+import Home from './pages/Home.jsx';
+import Login from './pages/login.jsx';
+import CadastroAlunos from './pages/cadastro-alunos.jsx';
+import CadastroProfessor from './pages/cadastro-professor.jsx';
+import Relatorio from './pages/relatorio.jsx';
 
 function App() {
-  const [mensagem, setMensagem] = useState("Clique no botão para testar a conexão!")
-
-  // Função para testar se o React alcança o Java
-  const testarConexao = async () => {
-    try {
-      const response = await fetch('http://localhost:8080/teste') // URL do seu servidor Java
-      const data = await response.json()
-      setMensagem(data.mensagem)
-    } catch (error) {
-      setMensagem("Erro: O servidor Java está desligado ou o CORS bloqueou!")
-      console.error(error)
-    }
-  }
-
   return (
-    <div style={{ textAlign: 'center', padding: '50px', fontFamily: 'sans-serif' }}>
-      <h1 style={{ color: '#646cff' }}>Sistema Creche</h1>
-      <div className="card">
-        <p style={{ fontSize: '1.2rem', fontWeight: 'bold' }}>{mensagem}</p>
-        <button onClick={testarConexao} style={{ padding: '10px 20px', cursor: 'pointer' }}>
-          Testar Conexão com Java
-        </button>
-      </div>
-      <p style={{ marginTop: '30px', color: '#888' }}>
-       aaaa
-      </p>
-    </div>
-  )
+    <Router>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/cadastro-alunos" element={<CadastroAlunos />} />
+        <Route path="/cadastro-professor" element={<CadastroProfessor />} />
+        <Route path="/relatorio" element={<Relatorio />} />
+        <Route path="*" element={<h1>Página não encontrada!</h1>} />
+      </Routes>
+    </Router>
+  );
 }
 
-export default App
+export default App;

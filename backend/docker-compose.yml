@@ -13,5 +13,31 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  java-backend:
+    build: .  # Como o compose está na pasta backend, assume-se o Java aqui
+    container_name: creche_java
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+  # --- API PHP (O Integrador/Bridge) ---
+  php-api:
+    build: ./php-api  # Ajuste para o nome da pasta onde está o PHP
+    container_name: creche_php
+    ports:
+      - "8000:80"
+    depends_on:
+      - java-backend
+
+  # --- FRONTEND REACT ---
+  react-frontend:
+    build: ../frontend  # Sobe uma pasta e entra na do React
+    container_name: creche_react
+    ports:
+      - "5173:5173"
+    depends_on:
+      - php-api
+
 volumes:
   postgres_data:
