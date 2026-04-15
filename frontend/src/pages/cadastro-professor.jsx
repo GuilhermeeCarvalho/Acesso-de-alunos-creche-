@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 function CadastroProfessor() {
   return (
@@ -8,6 +9,9 @@ function CadastroProfessor() {
         <input type="text" placeholder="Nome do Professor" />
         <button type="submit">Salvar</button>
       </form>
+      <Link to="/login">
+        <button type="button">Login</button>
+      </Link>
     </div>
   );
 }
