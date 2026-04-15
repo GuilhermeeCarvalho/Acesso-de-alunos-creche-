@@ -2,3 +2,28 @@ h1 {
   color: #2c3e50;
   font-family: sans-serif;
 }
+
+nav ul {
+  list-style: none;
+  padding: 0;
+  text-align: center;
+}
+
+nav li {
+  display: inline-block;
+  margin: 10px;
+}
+
+nav a {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #3498db;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  font-family: sans-serif;
+}
+
+nav a:hover {
+  background-color: #2980b9;
+}
