@@ -9,7 +9,7 @@ function Home() {
       <p>Bem-vindo ao sistema de gestão.</p>
       <nav>
         <ul>
-          <li><Link to="/cadastro-professor">Cadastro de Professores</Link></li>
+          <li><Link to="/login">Login de Professores</Link></li>
           <li><Link to="/cadastro-alunos">Cadastro de Alunos</Link></li>
           <li><Link to="/relatorio">Relatório</Link></li>
         </ul>
