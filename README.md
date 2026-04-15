@@ -14,4 +14,5 @@ INSTRUÇÕES PARA RODAR O BACKEND:
   ./mvnw spring-boot:run
 
 
-  3 testee
+3. Rodar front
+   docker run --rm -p 5173:5173 creche-frontend
