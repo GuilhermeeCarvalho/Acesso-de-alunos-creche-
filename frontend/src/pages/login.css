@@ -1,0 +1,112 @@
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: #f3f5f9;
+}
+
+.login-card {
+  width: min(460px, 100%);
+  background: rgba(255, 255, 255, 0.98);
+  border-radius: 28px;
+  box-shadow: 0 26px 60px rgba(25, 39, 96, 0.16);
+  padding: 38px 36px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.login-header h1 {
+  margin: 0;
+  font-size: 2.8rem;
+  letter-spacing: -0.05em;
+  color: #1f2a57;
+}
+
+.login-header p {
+  margin: 14px 0 0;
+  color: #5d6792;
+  font-size: 1rem;
+  line-height: 1.75;
+}
+
+.login-form {
+  margin-top: 30px;
+  display: grid;
+  gap: 18px;
+}
+
+.login-form label {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #313d72;
+}
+
+.login-form input {
+  width: 100%;
+  padding: 18px 20px;
+  border: 1px solid #d7dfee;
+  border-radius: 18px;
+  background: #f8faff;
+  font-size: 1rem;
+  color: #1f2a57;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.login-form input:focus {
+  outline: none;
+  border-color: #7a8dff;
+  box-shadow: 0 0 0 8px rgba(110, 142, 251, 0.14);
+  background: #ffffff;
+}
+
+.login-button {
+  width: 100%;
+  padding: 18px 0;
+  margin-top: 6px;
+  border: none;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #4059ff 0%, #6e8efb 100%);
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 16px 30px rgba(64, 89, 255, 0.22);
+}
+
+.login-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 36px rgba(64, 89, 255, 0.28);
+}
+
+.login-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+  color: #596580;
+  font-size: 0.95rem;
+}
+
+.signup-link {
+  color: #4059ff;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.signup-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 540px) {
+  .login-card {
+    padding: 28px 24px;
+  }
+
+  .login-header h1 {
+    font-size: 2.2rem;
+  }
+}
