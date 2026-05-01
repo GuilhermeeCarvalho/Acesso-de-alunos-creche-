@@ -7,6 +7,8 @@ import com.univille.AccessControl.model.*;
 import com.univille.AccessControl.repository.*;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class RegistroService {
 
@@ -23,6 +25,10 @@ public class RegistroService {
         this.criancaRepository = criancaRepository;
         this.responsavelRepository = responsavelRepository;
         this.funcionarioRepository = funcionarioRepository;
+    }
+
+    public List<Registro> listarTodos() {
+        return registroRepository.findAll();
     }
 
     public Registro registrarEntrada(RegistroRequest request) {
