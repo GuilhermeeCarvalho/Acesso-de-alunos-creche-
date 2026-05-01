@@ -11,9 +11,9 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public Map<String, String> handleValidationErrors(MethodArgumentNotValidException ex) {
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErroResponse handleValidationErrors(MethodArgumentNotValidException ex) {
 
         Map<String, String> erros = new HashMap<>();
 
@@ -21,7 +21,13 @@ public class GlobalExceptionHandler {
             erros.put(error.getField(), error.getDefaultMessage());
         });
 
-        return erros;
+        return ErroResponse.builder()
+                .tipo(TipoErro.VALIDACAO)
+                .mensagem("Erro de validação")
+                .status(400)
+                .dataHora(LocalDateTime.now())
+                .erros(erros)
+                .build();
     }
 
     @ExceptionHandler(RegraNegocioException.class)
@@ -29,9 +35,33 @@ public class GlobalExceptionHandler {
     public ErroResponse handleRegraNegocio(RegraNegocioException ex) {
 
         return ErroResponse.builder()
-                .erro("REGRA_NEGOCIO")
+                .tipo(TipoErro.REGRA_NEGOCIO)
                 .mensagem(ex.getMessage())
                 .status(400)
+                .dataHora(LocalDateTime.now())
+                .build();
+    }
+
+    @ExceptionHandler(RecursoNaoEncontradoException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErroResponse handleNotFound(RecursoNaoEncontradoException ex) {
+
+        return ErroResponse.builder()
+                .tipo(TipoErro.NAO_ENCONTRADO)
+                .mensagem(ex.getMessage())
+                .status(404)
+                .dataHora(LocalDateTime.now())
+                .build();
+    }
+
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErroResponse handleGeneric(Exception ex) {
+
+        return ErroResponse.builder()
+                .tipo(TipoErro.ERRO_INTERNO)
+                .mensagem("Erro inesperado no sistema")
+                .status(500)
                 .dataHora(LocalDateTime.now())
                 .build();
     }
