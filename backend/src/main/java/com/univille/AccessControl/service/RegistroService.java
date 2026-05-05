@@ -1,10 +1,13 @@
 package com.univille.AccessControl.service;
 
 import com.univille.AccessControl.dto.RegistroRequest;
+import com.univille.AccessControl.exception.RecursoNaoEncontradoException;
 import com.univille.AccessControl.exception.RegraNegocioException;
 import com.univille.AccessControl.model.*;
 import com.univille.AccessControl.repository.*;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class RegistroService {
@@ -24,6 +27,10 @@ public class RegistroService {
         this.funcionarioRepository = funcionarioRepository;
     }
 
+    public List<Registro> listarTodos() {
+        return registroRepository.findAll();
+    }
+
     public Registro registrarEntrada(RegistroRequest request) {
         return salvarRegistro(request, TipoRegistro.ENTRADA);
     }
@@ -35,13 +42,13 @@ public class RegistroService {
     private Registro salvarRegistro(RegistroRequest request, TipoRegistro tipo) {
 
         Crianca crianca = criancaRepository.findById(request.getCriancaId())
-                .orElseThrow(() -> new RuntimeException("Criança não encontrada"));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Criança não encontrada"));
 
         Responsavel responsavel = responsavelRepository.findById(request.getResponsavelId())
-                .orElseThrow(() -> new RuntimeException("Responsável não encontrado"));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Responsável não encontrado"));
 
         Funcionario funcionario = funcionarioRepository.findById(request.getFuncionarioId())
-                .orElseThrow(() -> new RuntimeException("Funcionário não encontrado"));
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Funcionário não encontrado"));
 
         registroRepository.findTopByCriancaIdOrderByDataHoraDesc(crianca.getId())
                 .ifPresent(ultimo -> {

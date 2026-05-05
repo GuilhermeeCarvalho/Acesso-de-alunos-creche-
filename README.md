@@ -1,18 +1,36 @@
 # Acesso-de-alunos-creche-
-Projeto para controlar horario de entrada e saida de crianças em uma creche 
 
-INSTRUÇÕES PARA RODAR O BACKEND:
--> Requisitos
-* Docker instalado
-* Java 17+
+Projeto para controlar horario de entrada e saida de criancas em uma creche.
 
-->Passos
-1. Subir o banco
-   docker-compose up -d
+## Como rodar o projeto
 
-2. Rodar aplicação
-  ./mvnw spring-boot:run
+### Requisito
 
+- Docker Desktop instalado e em execucao
 
-3. Rodar front
-   docker run --rm -p 5173:5173 creche-frontend
+### Passo a passo
+
+1. Abra o terminal na raiz do projeto.
+2. Execute o comando abaixo para subir frontend, backend e banco de dados:
+
+```bash
+docker-compose up -d --build
+```
+
+3. Acesse a aplicacao:
+   - Frontend: http://localhost:5173
+   - Backend: http://localhost:8080
+
+### Comandos uteis
+
+Parar o ambiente:
+
+```bash
+docker-compose down
+```
+
+Ver logs:
+
+```bash
+docker-compose logs -f
+```

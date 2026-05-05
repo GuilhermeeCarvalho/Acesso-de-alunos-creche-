@@ -7,6 +7,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/registro")
 public class RegistroController {
@@ -25,5 +27,9 @@ public class RegistroController {
     @PostMapping("/saida")
     public ResponseEntity<Registro> saida(@RequestBody @Valid RegistroRequest request) {
         return ResponseEntity.ok(service.registrarSaida(request));
+    }
+    @GetMapping
+    public ResponseEntity<List<Registro>> listar() {
+        return ResponseEntity.ok(service.listarTodos());
     }
 }
