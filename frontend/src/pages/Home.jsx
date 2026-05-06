@@ -5,7 +5,7 @@ import './Home.css';
 function Home() {
   return (
     <div>
-      <h1>Página Inicial - Creche</h1>
+      <h1 style={{color: 'red'}}>Página Inicial - Creche</h1>
       <p>Bem-vindo ao sistema de gestão.</p>
       <nav>
         <ul>
