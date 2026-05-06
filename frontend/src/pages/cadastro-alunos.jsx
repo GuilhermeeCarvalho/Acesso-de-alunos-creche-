@@ -9,7 +9,6 @@ function CadastroAlunos() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Ajustado para porta 8000 conforme seu Docker
       const response = await axios.post('http://localhost:8000/index.php', {
         nome,
         turma
