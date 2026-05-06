@@ -1,3 +1,4 @@
+/* Container principal da página de login*/
 .login-page {
   min-height: 100vh;
   display: flex;
@@ -6,18 +7,21 @@
   padding: 32px;
 }
 
+/* Caixa branca do formulário */
 .login-card {
   width: min(460px, 100%);
   background: rgba(255, 255, 255, 0.98);
   border-radius: 28px;
   padding: 38px 36px;
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(170, 170, 170, 0.6);
 }
 
+/* Cabeçalho do card centralizado. */
 .login-header {
   text-align: center;
 }
 
+/* Título do login com tamanho grande e cor escura. */
 .login-header h1 {
   margin: 0;
   font-size: 2.8rem;
@@ -25,6 +29,7 @@
   color: #1f2a57;
 }
 
+/* Texto explicativo abaixo do título */
 .login-header p {
   margin: 14px 0 0;
   color: #5d6792;
@@ -32,6 +37,7 @@
   line-height: 1.75;
 }
 
+/* Formulário com espaçamento */
 .login-form {
   width: 100%;
   margin-top: 30px;
@@ -39,12 +45,16 @@
   gap: 18px;
 }
 
+/* Rótulos do formulário com texto em negrito. */
 .login-form label {
   font-size: 0.95rem;
   font-weight: 700;
   color: #313d72;
+  text-align: left;
+  margin-left: 5px;
 }
 
+/* Inputs com largura total, padding e borda suave */
 .login-form input {
   width: 100%;
   padding: 18px 20px;
@@ -57,6 +67,7 @@
   box-sizing: border-box;
 }
 
+/* Estado de foco dos inputs para destaque visual*/
 .login-form input:focus {
   outline: none;
   border-color: #7a8dff;
@@ -64,6 +75,7 @@
   background: #ffffff;
 }
 
+/* Botão principal de envio */
 .login-button {
   width: 100%;
   padding: 18px 0;
@@ -79,11 +91,13 @@
   box-shadow: 0 16px 30px rgba(64, 89, 255, 0.22);
 }
 
+/* Hover do botão para efeito de elevação*/
 .login-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 22px 36px rgba(64, 89, 255, 0.28);
 }
 
+/* Rodapé do login com link de cadastro alinhado ao centro */
 .login-footer {
   display: flex;
   flex-wrap: wrap;
@@ -95,16 +109,19 @@
   font-size: 0.95rem;
 }
 
+/* Estilo do link de cadastro */
 .signup-link {
   color: #4059ff;
   font-weight: 700;
   text-decoration: none;
 }
 
+/* Hover do link para sublinhar*/
 .signup-link:hover {
   text-decoration: underline;
 }
 
+/* Ajustes de tamanho para telas menores*/
 @media (max-width: 540px) {
   .login-card {
     padding: 28px 24px;
