@@ -14,6 +14,10 @@
   border: 1px solid rgba(255, 255, 255, 0.6);
 }
 
+.login-header {
+  text-align: center;
+}
+
 .login-header h1 {
   margin: 0;
   font-size: 2.8rem;
@@ -29,6 +33,7 @@
 }
 
 .login-form {
+  width: 100%;
   margin-top: 30px;
   display: grid;
   gap: 18px;
@@ -49,6 +54,7 @@
   font-size: 1rem;
   color: #1f2a57;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  box-sizing: border-box;
 }
 
 .login-form input:focus {
@@ -82,7 +88,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 10px;
   margin-top: 8px;
   color: #596580;

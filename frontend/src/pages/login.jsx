@@ -8,7 +8,7 @@ function Login() {
       <div className="login-card">
         <div className="login-header">
           <h1>Bem-vindo</h1>
-          <p>Faça login para acessar o controle de acesso dos funcionários.</p>
+          <p>Faça login para ter acesso ao sistema</p>
         </div>
         <div className="login-form">
           <label htmlFor="login-user">Usuário</label>
