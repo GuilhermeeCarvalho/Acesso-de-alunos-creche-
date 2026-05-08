@@ -11,8 +11,8 @@ function Login() {
           <p>Faça login para ter acesso ao sistema</p>
         </div>
         <div className="login-form">
-          <label htmlFor="login-user">Usuário</label>
-          <input id="login-user" type="text" placeholder="Digite seu usuário" />
+          <label htmlFor="login-user">Email</label>
+          <input id="login-user" type="email" placeholder="Digite seu email" />
 
           <label htmlFor="login-password">Senha</label>
           <input id="login-password" type="password" placeholder="Digite sua senha" />

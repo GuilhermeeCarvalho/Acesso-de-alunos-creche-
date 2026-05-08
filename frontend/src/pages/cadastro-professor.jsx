@@ -11,8 +11,8 @@ function CadastroProfessor() {
           <p>Preencha os campos abaixo para criar sua conta</p>
         </div>
         <div className="cadastro-prof-form">
-          <label htmlFor="cadastro-prof-user">Usuário</label>
-          <input id="cadastro-prof-user" type="text" placeholder="Digite seu usuário" />
+          <label htmlFor="cadastro-prof-user">Email</label>
+          <input id="cadastro-prof-user" type="email" placeholder="Digite seu email" />
     
           <label htmlFor="cadastro-prof-password">Senha</label>
           <input id="cadastro-prof-password" type="password" placeholder="Digite sua senha" />
