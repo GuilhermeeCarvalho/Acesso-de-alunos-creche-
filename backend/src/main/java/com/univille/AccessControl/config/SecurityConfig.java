@@ -3,9 +3,9 @@ package com.univille.AccessControl.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @Configuration
 public class SecurityConfig {
@@ -30,11 +30,21 @@ public class SecurityConfig {
 
                 .authorizeHttpRequests(auth -> auth
 
-                        .requestMatchers(
-                                "/auth/**"
-                        ).permitAll()
+                        // LOGIN
+                        .requestMatchers("/auth/**")
+                        .permitAll()
 
-                        .anyRequest().authenticated()
+                        // APENAS ADMIN
+                        .requestMatchers("/funcionarios/**")
+                        .hasRole("ADMIN")
+
+                        // ADMIN E FUNCIONARIO
+                        .requestMatchers("/registro/**")
+                        .hasAnyRole("ADMIN", "FUNCIONARIO")
+
+
+                        .anyRequest()
+                        .authenticated()
                 )
 
                 .addFilterBefore(

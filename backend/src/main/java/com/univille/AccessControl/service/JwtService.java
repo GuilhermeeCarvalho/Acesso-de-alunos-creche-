@@ -17,10 +17,11 @@ public class JwtService {
         return Keys.hmacShaKeyFor(SECRET.getBytes());
     }
 
-    public String gerarToken(String email) {
+    public String gerarToken(String email, String role) {
 
         return Jwts.builder()
                 .setSubject(email)
+                .claim("role", role)
                 .signWith(getKey())
                 .compact();
     }
@@ -34,6 +35,17 @@ public class JwtService {
                 .getBody();
 
         return claims.getSubject();
+    }
+
+    public String extrairRole(String token) {
+
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(getKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+
+        return claims.get("role", String.class);
     }
 
     public boolean tokenValido(String token) {
