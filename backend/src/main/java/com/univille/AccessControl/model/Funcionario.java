@@ -14,6 +14,11 @@ public class Funcionario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "O nome do funcionário é obrigatório")
+    @NotBlank(message = "Nome é obrigatório")
     private String nome;
+
+    @Column(unique = true)
+    private String email;
+
+    private String senha;
 }
