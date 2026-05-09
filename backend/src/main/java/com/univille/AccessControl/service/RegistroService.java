@@ -6,6 +6,8 @@ import com.univille.AccessControl.exception.RegraNegocioException;
 import com.univille.AccessControl.model.*;
 import com.univille.AccessControl.repository.*;
 import org.springframework.stereotype.Service;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 
@@ -40,6 +42,10 @@ public class RegistroService {
     }
 
     private Registro salvarRegistro(RegistroRequest request, TipoRegistro tipo) {
+        Authentication authentication =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        String emailFuncionario = authentication.getName();
 
         Crianca crianca = criancaRepository.findById(request.getCriancaId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Criança não encontrada"));
@@ -47,8 +53,13 @@ public class RegistroService {
         Responsavel responsavel = responsavelRepository.findById(request.getResponsavelId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Responsável não encontrado"));
 
-        Funcionario funcionario = funcionarioRepository.findById(request.getFuncionarioId())
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Funcionário não encontrado"));
+        Funcionario funcionario = funcionarioRepository
+                .findByEmail(emailFuncionario)
+                .orElseThrow(() ->
+                        new RecursoNaoEncontradoException(
+                                "Funcionário não encontrado"
+                        )
+                );
 
         registroRepository.findTopByCriancaIdOrderByDataHoraDesc(crianca.getId())
                 .ifPresent(ultimo -> {

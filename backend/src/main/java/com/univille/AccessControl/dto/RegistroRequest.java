@@ -11,7 +11,4 @@ public class RegistroRequest {
 
     @NotNull
     private Long responsavelId;
-
-    @NotNull
-    private Long funcionarioId;
 }
