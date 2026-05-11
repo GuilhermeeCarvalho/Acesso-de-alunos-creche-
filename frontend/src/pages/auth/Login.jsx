@@ -14,17 +14,27 @@ export default function Login() {
   const from = location.state?.from?.pathname || '/';
 
   const handleSubmit = async (event) => {
+
     event.preventDefault();
 
     if (!email.trim() || !password.trim()) {
-      setMessage('Preencha usuário e senha para continuar.');
-      return;
+
+        setMessage('Preencha usuário e senha para continuar.');
+        return;
     }
 
-    await login({ email, name: email.split('@')[0] || 'Usuário' });
-    setMessage('Acesso liberado.');
-    navigate(from, { replace: true });
-  };
+    try {
+
+        await login(email, password);
+
+        navigate(from, { replace: true });
+
+    } catch (error) {
+
+        const msg = error?.response?.data?.mensagem || error?.message || 'Email ou senha inválidos.';
+        setMessage(msg);
+    }
+};
 
   return (
     <div className="auth-page">

@@ -1,61 +1,61 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useContext,
+  useState
+} from "react";
 
-const STORAGE_KEY = 'acesso-de-alunos-creche:auth';
+import api from "../services/api";
 
-const AuthContext = createContext(null);
-
-function readStoredUser() {
-  try {
-    const rawValue = window.localStorage.getItem(STORAGE_KEY);
-    return rawValue ? JSON.parse(rawValue) : null;
-  } catch {
-    return null;
-  }
-}
+const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => readStoredUser());
 
-  useEffect(() => {
-    if (user) {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-      return;
+  const [usuario, setUsuario] = useState(null);
+
+  async function login(email, senha) {
+
+    const response = await api.post("/auth/login", {
+      email,
+      senha
+    });
+
+    // Axios wraps response in .data, extract the token
+    const token = response.data?.token;
+
+    if (!token) {
+      throw new Error("Resposta inválida: token não encontrado");
     }
 
-    window.localStorage.removeItem(STORAGE_KEY);
-  }, [user]);
+    localStorage.setItem("token", token);
 
-  const value = useMemo(() => {
-    const login = async (credentials = {}) => {
-      const nextUser = {
-        name: credentials.name || credentials.email || 'Usuário',
-        email: credentials.email || '',
-        token: `demo-${Date.now()}`,
-      };
+    setUsuario({
+      email,
+      token
+    });
+  }
 
-      setUser(nextUser);
-      return nextUser;
-    };
+  function logout() {
 
-    const logout = () => setUser(null);
+    localStorage.removeItem("token");
 
-    return {
-      user,
-      isAuthenticated: Boolean(user),
-      login,
-      logout,
-    };
-  }, [user]);
+    setUsuario(null);
+  }
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        user: usuario,
+        usuario,
+        isAuthenticated: !!usuario,
+        login,
+        logout
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-
-  if (!context) {
-    throw new Error('useAuth deve ser usado dentro de AuthProvider.');
-  }
-
-  return context;
+  return useContext(AuthContext);
 }

@@ -26,7 +26,7 @@ export default function Home() {
         <main className="page">
           <Header
             eyebrow="Painel da Creche"
-            title={isAuthenticated ? `Olá, ${user?.name}` : 'Acesso de alunos da creche'}
+            title={isAuthenticated ? `Olá, ${user?.email?.split('@')[0] || 'usuário'}` : 'Acesso de alunos da creche'}
             description="Organize cadastros, acompanhe entradas e saídas e consulte relatórios em um só lugar."
             actions={
               <>
