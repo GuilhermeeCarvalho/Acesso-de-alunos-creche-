@@ -61,8 +61,6 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: creche_frontend
-    environment:
-      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
     ports:
       - "${FRONTEND_PORT:-5173}:5173"
     depends_on:
