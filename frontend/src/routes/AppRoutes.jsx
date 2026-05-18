@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 
 import ProtectedRoute from '../components/ProtectedRoute.jsx';
 import CadastroAluno from '../pages/alunos/CadastroAluno.jsx';
@@ -11,7 +11,6 @@ import Relatorio from '../pages/registros/Relatorio.jsx';
 
 export default function AppRoutes() {
   return (
-    <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
@@ -63,6 +62,5 @@ export default function AppRoutes() {
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </BrowserRouter>
   );
 }
