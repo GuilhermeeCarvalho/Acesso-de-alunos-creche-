@@ -22,6 +22,16 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/responsaveis': {
+        target,
+        changeOrigin: true,
+        secure: false,
+      },
+      '/vinculos': {
+        target,
+        changeOrigin: true,
+        secure: false,
+      },
       '/alunos': {
         target,
         changeOrigin: true,
