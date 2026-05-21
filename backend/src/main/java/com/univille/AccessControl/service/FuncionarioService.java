@@ -1,5 +1,6 @@
 package com.univille.AccessControl.service;
 
+import com.univille.AccessControl.exception.EmailJaCadastradoException;
 import com.univille.AccessControl.model.Funcionario;
 import com.univille.AccessControl.repository.FuncionarioRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -20,6 +21,16 @@ public class FuncionarioService {
     }
 
     public Funcionario salvar(Funcionario funcionario) {
+
+        funcionario.setSenha(
+                passwordEncoder.encode(funcionario.getSenha())
+        );
+        if (repository.findByEmail(funcionario.getEmail()).isPresent()) {
+
+            throw new EmailJaCadastradoException(
+                    "Já existe um funcionário cadastrado com este email"
+            );
+        }
 
         funcionario.setSenha(
                 passwordEncoder.encode(funcionario.getSenha())

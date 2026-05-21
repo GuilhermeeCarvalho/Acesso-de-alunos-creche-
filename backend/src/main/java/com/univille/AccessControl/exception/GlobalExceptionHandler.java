@@ -72,4 +72,17 @@ public class GlobalExceptionHandler {
                 .dataHora(LocalDateTime.now())
                 .build();
     }
+    @ExceptionHandler(EmailJaCadastradoException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErroResponse handleEmailDuplicado(
+            EmailJaCadastradoException ex
+    ) {
+
+        return ErroResponse.builder()
+                .tipo(TipoErro.VALIDACAO)
+                .mensagem(ex.getMessage())
+                .status(409)
+                .dataHora(LocalDateTime.now())
+                .build();
+    }
 }
