@@ -9,3 +9,8 @@ export async function createResponsavel(payload) {
   const response = await api.post('/responsaveis', payload);
   return unwrapResponse(response);
 }
+
+export async function listResponsaveisDaCrianca(criancaId) {
+  const response = await api.get(`/vinculos/crianca/${criancaId}`);
+  return unwrapResponse(response);
+}
