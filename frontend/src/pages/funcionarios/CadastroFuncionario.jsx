@@ -5,23 +5,50 @@ import Navbar from '../../components/Navbar.jsx';
 import Sidebar from '../../components/Sidebar.jsx';
 import { createFuncionario } from '../../services/funcionarioService.js';
 
+const roleOptions = [
+  { value: 'ADMIN', label: 'ADMIN' },
+  { value: 'FUNCIONARIO', label: 'FUNCIONARIO' },
+];
+
 export default function CadastroFuncionario() {
   const [nome, setNome] = useState('');
-  const [cargo, setCargo] = useState('');
   const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [role, setRole] = useState('FUNCIONARIO');
   const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    const nomeLimpo = nome.trim();
+    const emailLimpo = email.trim();
+    const senhaLimpa = senha.trim();
+
+    if (!nomeLimpo || !emailLimpo || !senhaLimpa || !role) {
+      setError('Informe nome, e-mail, senha e role para continuar.');
+      setMessage('');
+      return;
+    }
+
     try {
-      await createFuncionario({ nome, cargo, email });
+      await createFuncionario({
+        nome: nomeLimpo,
+        email: emailLimpo,
+        senha: senhaLimpa,
+        role,
+      });
+
       setMessage('Funcionário cadastrado com sucesso.');
+      setError('');
       setNome('');
-      setCargo('');
       setEmail('');
-    } catch {
-      setMessage('Cadastro concluído localmente. Conecte a API para persistir os dados.');
+      setSenha('');
+      setRole('FUNCIONARIO');
+    } catch (err) {
+      const apiMessage = err?.response?.data?.message || err?.response?.data?.mensagem;
+      setError(apiMessage || 'Não foi possível cadastrar o funcionário. Verifique a API e tente novamente.');
+      setMessage('');
     }
   };
 
@@ -36,7 +63,7 @@ export default function CadastroFuncionario() {
           <Header
             eyebrow="Funcionários"
             title="Cadastro de funcionário"
-            description="Registre professores e colaboradores com os dados principais do perfil."
+            description="Registre professores e colaboradores com nome, e-mail, senha e role do backend."
           />
 
           <section className="panel" style={{ marginTop: '22px' }}>
@@ -44,17 +71,48 @@ export default function CadastroFuncionario() {
               <div className="form-grid">
                 <div className="field">
                   <label htmlFor="funcionario-nome">Nome completo</label>
-                  <input id="funcionario-nome" value={nome} onChange={(event) => setNome(event.target.value)} placeholder="Nome completo" />
+                  <input
+                    id="funcionario-nome"
+                    value={nome}
+                    onChange={(event) => setNome(event.target.value)}
+                    placeholder="Nome completo"
+                    required
+                  />
                 </div>
 
                 <div className="field">
-                  <label htmlFor="funcionario-cargo">Cargo</label>
-                  <input id="funcionario-cargo" value={cargo} onChange={(event) => setCargo(event.target.value)} placeholder="Ex.: Professora" />
+                  <label htmlFor="funcionario-email">E-mail</label>
+                  <input
+                    id="funcionario-email"
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    placeholder="nome@creche.com"
+                    required
+                  />
                 </div>
 
-                <div className="field field--full">
-                  <label htmlFor="funcionario-email">E-mail</label>
-                  <input id="funcionario-email" type="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="nome@creche.com" />
+                <div className="field">
+                  <label htmlFor="funcionario-senha">Senha</label>
+                  <input
+                    id="funcionario-senha"
+                    type="password"
+                    value={senha}
+                    onChange={(event) => setSenha(event.target.value)}
+                    placeholder="Digite uma senha"
+                    required
+                  />
+                </div>
+
+                <div className="field">
+                  <label htmlFor="funcionario-role">Role</label>
+                  <select id="funcionario-role" value={role} onChange={(event) => setRole(event.target.value)} required>
+                    {roleOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -64,6 +122,7 @@ export default function CadastroFuncionario() {
                 </button>
               </div>
 
+              {error && <div className="notice notice--error">{error}</div>}
               {message && <div className="notice">{message}</div>}
             </form>
           </section>
