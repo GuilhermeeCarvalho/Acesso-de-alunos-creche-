@@ -12,13 +12,11 @@ export default function Navbar() {
                 <Link to="/funcionarios">Funcionários</Link>
             </div>
             <div className="navbar-right">
-                {user ? (
+                {user && (
                     <>
                         <span className="navbar-user">{user.email || 'Usuário'}</span>
                         <button className="button-link" onClick={logout}>Sair</button>
                     </>
-                ) : (
-                    <Link to="/login">Entrar</Link>
                 )}
             </div>
         </nav>

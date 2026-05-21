@@ -7,8 +7,8 @@ import Table from '../../components/Table.jsx';
 import { listAlunos } from '../../services/alunoService.js';
 
 const fallbackAlunos = [
-  { id: 1, nome: 'Ana Clara', turma: 'Jardim II', responsavel: 'Marina Souza' },
-  { id: 2, nome: 'Miguel Santos', turma: 'Maternal I', responsavel: 'Carlos Santos' },
+  { id: 1, nome: 'Ana Clara', turma: 'Jardim II' },
+  { id: 2, nome: 'Miguel Santos', turma: 'Maternal I' },
 ];
 
 export default function ListaAlunos() {
@@ -49,7 +49,7 @@ export default function ListaAlunos() {
           <Header
             eyebrow="Alunos"
             title="Lista de alunos"
-            description="Consulta rápida dos alunos cadastrados e de seus responsáveis."
+            description="Consulta rápida das crianças cadastradas e de suas turmas."
           />
 
           <section className="panel" style={{ marginTop: '22px' }}>
@@ -57,7 +57,6 @@ export default function ListaAlunos() {
               columns={[
                 { key: 'nome', label: 'Nome' },
                 { key: 'turma', label: 'Turma' },
-                { key: 'responsavel', label: 'Responsável' },
               ]}
               rows={alunos}
               emptyMessage="Nenhum aluno cadastrado."

@@ -17,6 +17,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      '/criancas': {
+        target,
+        changeOrigin: true,
+        secure: false,
+      },
       '/alunos': {
         target,
         changeOrigin: true,
