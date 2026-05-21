@@ -20,6 +20,8 @@ docker-compose up -d --build
 3. Acesse a aplicacao:
    - Frontend: http://localhost:5173
    - Backend: http://localhost:8080
+   - Swagger UI: http://localhost:8080/swagger-ui/index.html
+   - OpenAPI JSON: http://localhost:8080/v3/api-docs
 
 ### Comandos uteis
 

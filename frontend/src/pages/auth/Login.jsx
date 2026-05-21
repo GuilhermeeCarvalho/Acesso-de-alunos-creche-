@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../../contexts/AuthContext.jsx';
@@ -7,34 +7,34 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [message, setMessage] = useState('');
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = location.state?.from?.pathname || '/';
+  const from = location.state?.from?.pathname || '/home';
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate(from === '/login' ? '/home' : from, { replace: true });
+    }
+  }, [isAuthenticated, from, navigate]);
 
   const handleSubmit = async (event) => {
-
     event.preventDefault();
 
     if (!email.trim() || !password.trim()) {
-
-        setMessage('Preencha usuário e senha para continuar.');
-        return;
+      setMessage('Preencha usuário e senha para continuar.');
+      return;
     }
 
     try {
-
-        await login(email, password);
-
-        navigate(from, { replace: true });
-
+      await login(email, password);
+      navigate(from === '/' || from === '/login' ? '/home' : from, { replace: true });
     } catch (error) {
-
-        const msg = error?.response?.data?.mensagem || error?.message || 'Email ou senha inválidos.';
-        setMessage(msg);
+      const msg = error?.response?.data?.mensagem || error?.message || 'Email ou senha inválidos.';
+      setMessage(msg);
     }
-};
+  };
 
   return (
     <div className="auth-page">
@@ -69,9 +69,6 @@ export default function Login() {
           <button type="submit" className="button">
             Entrar
           </button>
-          <Link to="/" className="button-secondary">
-            Voltar para home
-          </Link>
         </div>
 
         <p className="muted" style={{ marginTop: '18px' }}>

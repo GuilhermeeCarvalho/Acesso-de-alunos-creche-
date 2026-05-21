@@ -1,4 +1,3 @@
-version: '3.9'
 
 services:
   # ==================== POSTGRESQLL ====================
@@ -46,7 +45,7 @@ services:
     networks:
       - creche-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/ || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -61,6 +60,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: creche_frontend
+    environment:
+      - VITE_API_PROXY_TARGET=http://backend:8080
     ports:
       - "${FRONTEND_PORT:-5173}:5173"
     depends_on:

@@ -1,10 +1,10 @@
 import axios from "axios";
 
-// Use relative path so Vite dev proxy handles it
-// In dev, requests to /auth, /alunos, etc. will be proxied to http://localhost:8080
-// In production (built), it will use the baseURL
-const baseURL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? "/" : "http://localhost:8080");
-
+// Use relative path so Vite dev proxy handles it in development.
+// In production, use VITE_API_BASE_URL when provided, otherwise use same-origin paths.
+const baseURL = import.meta.env.DEV
+  ? "/"
+  : (import.meta.env.VITE_API_BASE_URL || "/");
 
 export const api = axios.create({
   baseURL,
