@@ -1,13 +1,12 @@
 import { NavLink } from 'react-router-dom';
 
 const menuItems = [
-  { to: '/', label: 'Início' },
+  { to: '/home', label: 'Início' },
   { to: '/alunos/cadastro', label: 'Cadastro de aluno' },
   { to: '/alunos', label: 'Lista de alunos' },
   { to: '/funcionarios/cadastro', label: 'Cadastro de funcionário' },
   { to: '/registros/entrada-saida', label: 'Entrada e saída' },
   { to: '/registros/relatorio', label: 'Relatório' },
-  { to: '/login', label: 'Login' },
 ];
 
 export default function Sidebar() {
