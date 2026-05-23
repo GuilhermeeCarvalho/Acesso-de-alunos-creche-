@@ -1,15 +1,21 @@
 import { NavLink } from 'react-router-dom';
 
-const menuItems = [
-  { to: '/home', label: 'Início' },
-  { to: '/alunos/cadastro', label: 'Cadastro de aluno' },
-  { to: '/alunos', label: 'Lista de alunos' },
-  { to: '/funcionarios/cadastro', label: 'Cadastro de funcionário' },
-  { to: '/registros/entrada-saida', label: 'Entrada e saída' },
-  { to: '/registros/relatorio', label: 'Relatório' },
-];
+import { useAuth } from '../contexts/AuthContext.jsx';
 
 export default function Sidebar() {
+  const { usuario } = useAuth();
+
+  const isAdmin = usuario?.role === 'ADMIN';
+
+  const menuItems = [
+    { to: '/home', label: 'Início' },
+    { to: '/alunos/cadastro', label: 'Cadastro de aluno' },
+    { to: '/alunos', label: 'Lista de alunos' },
+    ...(isAdmin ? [{ to: '/funcionarios/cadastro', label: 'Cadastro de funcionário' }] : []),
+    { to: '/registros/entrada-saida', label: 'Entrada e saída' },
+    { to: '/registros/relatorio', label: 'Relatório' },
+  ];
+
   return (
     <aside className="sidebar">
       <div className="sidebar__brand">
