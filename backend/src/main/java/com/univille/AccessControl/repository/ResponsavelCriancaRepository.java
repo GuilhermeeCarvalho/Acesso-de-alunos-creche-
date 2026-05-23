@@ -7,4 +7,8 @@ import java.util.List;
 
 public interface ResponsavelCriancaRepository extends JpaRepository<ResponsavelCrianca, Long> {
     List<ResponsavelCrianca> findByCriancaId(Long criancaId);
+
+    void deleteByCriancaId(Long criancaId);
+
+    void deleteByResponsavelId(Long responsavelId);
 }

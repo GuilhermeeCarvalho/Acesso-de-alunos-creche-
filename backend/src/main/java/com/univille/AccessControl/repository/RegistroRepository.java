@@ -7,4 +7,8 @@ import java.util.Optional;
 
 public interface RegistroRepository extends JpaRepository<Registro, Long> {
     Optional<Registro> findTopByCriancaIdOrderByDataHoraDesc(Long criancaId);
+
+    void deleteByCriancaId(Long criancaId);
+
+    void deleteByResponsavelId(Long responsavelId);
 }
