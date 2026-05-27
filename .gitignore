@@ -1,1 +1,2 @@
 .env
+backend/postgres_data/
