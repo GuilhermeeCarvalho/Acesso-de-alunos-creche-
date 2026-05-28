@@ -22,9 +22,6 @@ public class FuncionarioService {
 
     public Funcionario salvar(Funcionario funcionario) {
 
-        funcionario.setSenha(
-                passwordEncoder.encode(funcionario.getSenha())
-        );
         if (repository.findByEmail(funcionario.getEmail()).isPresent()) {
 
             throw new EmailJaCadastradoException(
