@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import Header from '../../components/Header.jsx';
 import Navbar from '../../components/Navbar.jsx';
@@ -40,6 +40,7 @@ function normalizarRegistro(registro) {
   return {
     id: registro.id,
     crianca: registro.crianca?.nome || registro.crianca || 'Sem criança',
+    turma: registro.crianca?.turma || 'Sem turma',
     responsavel: registro.responsavel?.nome || registro.responsavel || 'Sem responsável',
     funcionario: registro.funcionario?.nome || registro.funcionario || 'Sem funcionário',
     tipo: registro.tipo ? registro.tipo.replaceAll('_', ' ') : 'Sem tipo',
@@ -49,6 +50,7 @@ function normalizarRegistro(registro) {
 
 export default function Relatorio() {
   const [registros, setRegistros] = useState(fallbackRegistros);
+  const [turmaFiltro, setTurmaFiltro] = useState('all');
 
   useEffect(() => {
     let isActive = true;
@@ -74,6 +76,24 @@ export default function Relatorio() {
     };
   }, []);
 
+  const turmasDisponiveis = useMemo(() => {
+    return Array.from(
+      new Set(registros.map((registro) => registro.turma).filter(Boolean))
+    ).sort((a, b) =>
+      a.localeCompare(b, 'pt-BR', { sensitivity: 'base' })
+    );
+  }, [registros]);
+
+  const registrosFiltrados = useMemo(() => {
+    if (turmaFiltro === 'all') {
+      return registros;
+    }
+
+    return registros.filter(
+      (registro) => registro.turma === turmaFiltro
+    );
+  }, [registros, turmaFiltro]);
+
   return (
     <div className="app-shell">
       <Sidebar />
@@ -89,6 +109,34 @@ export default function Relatorio() {
           />
 
           <section className="panel" style={{ marginTop: '22px' }}>
+            <div className="table-toolbar">
+              <label className="field">
+                <span>Filtrar por turma</span>
+
+                <select
+                  value={turmaFiltro}
+                  onChange={(event) => setTurmaFiltro(event.target.value)}
+                >
+                  <option value="all">Todas as turmas</option>
+
+                  {turmasDisponiveis.map((turma) => (
+                    <option key={turma} value={turma}>
+                      {turma}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <div className="table-toolbar__summary">
+                <strong>{registrosFiltrados.length}</strong>
+                <span>
+                  {registrosFiltrados.length === 1
+                    ? ' registro exibido'
+                    : ' registros exibidos'}
+                </span>
+              </div>
+            </div>
+
             <Table
               columns={[
                 { key: 'crianca', label: 'Criança' },
@@ -97,7 +145,7 @@ export default function Relatorio() {
                 { key: 'tipo', label: 'Tipo' },
                 { key: 'dataHora', label: 'Data e hora' },
               ]}
-              rows={registros}
+              rows={registrosFiltrados}
               emptyMessage="Ainda não existem registros para exibir."
             />
           </section>
