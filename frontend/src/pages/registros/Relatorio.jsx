@@ -37,6 +37,7 @@ function formatarDataHora(dataHora) {
 }
 
 function normalizarRegistro(registro) {
+
   return {
     id: registro.id,
     crianca: registro.crianca?.nome || registro.crianca || 'Sem criança',
@@ -51,6 +52,7 @@ function normalizarRegistro(registro) {
 export default function Relatorio() {
   const [registros, setRegistros] = useState(fallbackRegistros);
   const [turmaFiltro, setTurmaFiltro] = useState('all');
+  const [tipoFiltro, setTipoFiltro] = useState('all');
 
   useEffect(() => {
     let isActive = true;
@@ -85,14 +87,16 @@ export default function Relatorio() {
   }, [registros]);
 
   const registrosFiltrados = useMemo(() => {
-    if (turmaFiltro === 'all') {
-      return registros;
-    }
+    return registros.filter((registro) => {
+      const passaTurma =
+        turmaFiltro === 'all' || registro.turma === turmaFiltro;
 
-    return registros.filter(
-      (registro) => registro.turma === turmaFiltro
-    );
-  }, [registros, turmaFiltro]);
+      const passaTipo =
+        tipoFiltro === 'all' || registro.tipo === tipoFiltro;
+
+      return passaTurma && passaTipo;
+    });
+  }, [registros, turmaFiltro, tipoFiltro]);
 
   return (
     <div className="app-shell">
@@ -109,23 +113,58 @@ export default function Relatorio() {
           />
 
           <section className="panel" style={{ marginTop: '22px' }}>
-            <div className="table-toolbar">
-              <label className="field">
-                <span>Filtrar por turma</span>
+            <div
+              className="table-toolbar"
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-end',
+                gap: '16px',
+                flexWrap: 'wrap',
+                marginBottom: '16px',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '16px',
+                  flexWrap: 'wrap',
+                }}
+              >
+                <label className="field">
+                  <span>Filtrar por turma</span>
 
-                <select
-                  value={turmaFiltro}
-                  onChange={(event) => setTurmaFiltro(event.target.value)}
-                >
-                  <option value="all">Todas as turmas</option>
+                  <select
+                    value={turmaFiltro}
+                    onChange={(event) =>
+                      setTurmaFiltro(event.target.value)
+                    }
+                  >
+                    <option value="all">Todas as turmas</option>
 
-                  {turmasDisponiveis.map((turma) => (
-                    <option key={turma} value={turma}>
-                      {turma}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                    {turmasDisponiveis.map((turma) => (
+                      <option key={turma} value={turma}>
+                        {turma}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label className="field">
+                  <span>Filtrar por tipo</span>
+
+                  <select
+                    value={tipoFiltro}
+                    onChange={(event) =>
+                      setTipoFiltro(event.target.value)
+                    }
+                  >
+                    <option value="all">Todos</option>
+                    <option value="ENTRADA">ENTRADA</option>
+                    <option value="SAIDA">SAÍDA</option>
+                  </select>
+                </label>
+              </div>
 
               <div className="table-toolbar__summary">
                 <strong>{registrosFiltrados.length}</strong>
