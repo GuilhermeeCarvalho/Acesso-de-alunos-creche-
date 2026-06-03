@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
+import * as QRLib from 'qrcode.react';
+
+const QRCodeComponent = QRLib.default ?? QRLib.QRCode ?? QRLib.QRCodeCanvas ?? QRLib.QRCodeSVG ?? QRLib;
 
 import Header from '../../components/Header.jsx';
 import Navbar from '../../components/Navbar.jsx';
@@ -39,6 +42,22 @@ export default function ListaAlunos() {
   const [addingResponsavelFor, setAddingResponsavelFor] = useState(null);
   const [newResponsavel, setNewResponsavel] = useState({ nome: '', telefone: '', relacao: 'RESPONSAVEL_LEGAL' });
   const [selectedAlunoId, setSelectedAlunoId] = useState(null);
+  const [qrAluno, setQrAluno] = useState(null);
+  const [qrData, setQrData] = useState('');
+
+  function buildQrPayload(aluno) {
+    return JSON.stringify({ id: aluno.id, nome: aluno.nome, turma: aluno.turma });
+  }
+
+  function handleGenerateQr(aluno) {
+    setQrAluno(aluno);
+    setQrData(buildQrPayload(aluno));
+  }
+
+  function handleCloseQr() {
+    setQrAluno(null);
+    setQrData('');
+  }
 
   async function refreshAlunos() {
     try {
@@ -235,6 +254,9 @@ export default function ListaAlunos() {
                               <button type="button" className="button button--secondary button--small" onClick={() => handleStartAddResponsavel(aluno)}>
                                 Adicionar responsável
                               </button>
+                              <button type="button" className="button button--secondary button--small" onClick={() => handleGenerateQr(aluno)}>
+                                Gerar QR
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -244,6 +266,41 @@ export default function ListaAlunos() {
                 </tbody>
               </table>
             </div>
+
+            {qrAluno && (
+              <div
+                className="modal"
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  background: 'rgba(0,0,0,0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 1000,
+                }}
+              >
+                <div className="modal__content" style={{ background: '#fff', padding: '20px', borderRadius: '6px', width: '460px', maxWidth: '96%' }}>
+                  <h3>QR Code de {qrAluno.nome}</h3>
+                  <p>Escaneie este QR para identificar o aluno no registro de entrada/saída.</p>
+
+                  <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
+                    <QRCodeComponent value={qrData} size={220} includeMargin={true} renderAs="canvas" />
+                  </div>
+
+                  <div style={{ wordBreak: 'break-all', background: '#f7f7f7', padding: '12px', borderRadius: '6px', marginBottom: '16px' }}>
+                    <strong>Dados do QR:</strong>
+                    <pre style={{ margin: '8px 0 0', fontSize: '0.9rem' }}>{qrData}</pre>
+                  </div>
+
+                  <div className="actions-row" style={{ marginTop: '12px', justifyContent: 'flex-end' }}>
+                    <button type="button" className="button button--secondary" onClick={handleCloseQr}>
+                      Fechar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {showEdit && editingAluno && (
               <div
