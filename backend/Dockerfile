@@ -11,6 +11,9 @@ COPY .mvn .mvn
 # Copiar código-fonte
 COPY src src
 
+#Da permissão dentro do Linux do Render:
+RUN chmod +x ./mvnw
+
 # Build da aplicação (skip tests para velocidade)
 RUN ./mvnw clean package -DskipTests -q
 
