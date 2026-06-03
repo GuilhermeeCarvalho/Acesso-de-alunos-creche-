@@ -1,6 +1,7 @@
 package com.univille.AccessControl.model;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -45,6 +46,6 @@ public class Registro {
 
     @PrePersist
     public void prePersist() {
-        this.dataHora = LocalDateTime.now();
+        this.dataHora = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
     }
 }
