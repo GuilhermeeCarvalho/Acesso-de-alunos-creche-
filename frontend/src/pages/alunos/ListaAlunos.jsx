@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
-import * as QRLib from 'qrcode.react';
-
-const QRCodeComponent = QRLib.default ?? QRLib.QRCode ?? QRLib.QRCodeCanvas ?? QRLib.QRCodeSVG ?? QRLib;
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { QRCodeCanvas } from 'qrcode.react';
+import { jsPDF } from 'jspdf';
 
 import Header from '../../components/Header.jsx';
 import Navbar from '../../components/Navbar.jsx';
@@ -44,6 +43,7 @@ export default function ListaAlunos() {
   const [selectedAlunoId, setSelectedAlunoId] = useState(null);
   const [qrAluno, setQrAluno] = useState(null);
   const [qrData, setQrData] = useState('');
+  const qrCanvasWrapperRef = useRef(null);
 
   function buildQrPayload(aluno) {
     return JSON.stringify({ id: aluno.id, nome: aluno.nome, turma: aluno.turma });
@@ -52,6 +52,52 @@ export default function ListaAlunos() {
   function handleGenerateQr(aluno) {
     setQrAluno(aluno);
     setQrData(buildQrPayload(aluno));
+  }
+
+  function downloadQrPdf() {
+    if (!qrAluno) {
+      return;
+    }
+
+    const canvas = qrCanvasWrapperRef.current?.querySelector('canvas');
+
+    if (!canvas) {
+      alert('Não foi possível gerar o PDF do QR Code.');
+      return;
+    }
+
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const marginX = 16;
+    const topY = 20;
+    const columnGap = 12;
+    const qrSize = 72;
+    const leftColumnWidth = pageWidth - (marginX * 2) - columnGap - qrSize;
+    const rightColumnX = pageWidth - marginX - qrSize;
+
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(18);
+    pdf.text('QR Code do aluno', marginX, topY);
+
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(12);
+    const textLines = [
+      `Nome: ${qrAluno.nome || 'Não informado'}`,
+      `Turma: ${qrAluno.turma || 'Não informada'}`,
+    ];
+
+    const wrappedLines = textLines.flatMap((line) => pdf.splitTextToSize(line, leftColumnWidth));
+    pdf.text(wrappedLines, marginX, topY + 14);
+
+    const qrImage = canvas.toDataURL('image/png');
+    const qrImageY = topY + 4;
+    pdf.addImage(qrImage, 'PNG', rightColumnX, qrImageY, qrSize, qrSize);
+
+    pdf.setDrawColor(220, 220, 220);
+    pdf.line(pageWidth / 2, topY, pageWidth / 2, pageHeight - topY);
+
+    pdf.save(`qr-code-${String(qrAluno.nome || 'aluno').replaceAll(' ', '-').toLowerCase()}.pdf`);
   }
 
   function handleCloseQr() {
@@ -284,8 +330,8 @@ export default function ListaAlunos() {
                   <h3>QR Code de {qrAluno.nome}</h3>
                   <p>Escaneie este QR para identificar o aluno no registro de entrada/saída.</p>
 
-                  <div style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
-                    <QRCodeComponent value={qrData} size={220} includeMargin={true} renderAs="canvas" />
+                  <div ref={qrCanvasWrapperRef} style={{ display: 'flex', justifyContent: 'center', margin: '20px 0' }}>
+                    <QRCodeCanvas value={qrData} size={220} includeMargin={true} />
                   </div>
 
                   <div style={{ wordBreak: 'break-all', background: '#f7f7f7', padding: '12px', borderRadius: '6px', marginBottom: '16px' }}>
@@ -294,6 +340,9 @@ export default function ListaAlunos() {
                   </div>
 
                   <div className="actions-row" style={{ marginTop: '12px', justifyContent: 'flex-end' }}>
+                    <button type="button" className="button" onClick={downloadQrPdf}>
+                      Baixar PDF
+                    </button>
                     <button type="button" className="button button--secondary" onClick={handleCloseQr}>
                       Fechar
                     </button>
