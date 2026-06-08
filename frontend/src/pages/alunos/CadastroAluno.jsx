@@ -15,6 +15,28 @@ const createResponsavelForm = () => ({
   relacao: 'RESPONSAVEL_LEGAL',
 });
 
+function extrairMensagemErroBackend(err) {
+  const data = err?.response?.data;
+  const mensagem = data?.mensagem || data?.message || data?.error;
+  const erros = data?.erros;
+
+  if (erros && typeof erros === 'object') {
+    const mensagens = Object.entries(erros)
+      .map(([campo, valor]) => `${campo}: ${valor}`)
+      .filter(Boolean);
+
+    if (mensagens.length > 0) {
+      return mensagens.join(' | ');
+    }
+  }
+
+  if (mensagem) {
+    return mensagem;
+  }
+
+  return err?.message || 'Não foi possível cadastrar o aluno. Verifique a API e tente novamente.';
+}
+
 export default function CadastroAluno() {
   const [nome, setNome] = useState('');
   const [turma, setTurma] = useState('');
@@ -108,8 +130,7 @@ export default function CadastroAluno() {
       setTurma('');
       setResponsaveis([createResponsavelForm()]);
     } catch (err) {
-      const apiMessage = err?.response?.data?.message || err?.response?.data?.mensagem;
-      setError(apiMessage || 'Não foi possível cadastrar o aluno. Verifique a API e tente novamente.');
+      setError(extrairMensagemErroBackend(err));
       setMessage('');
     }
   };
