@@ -33,6 +33,16 @@ function formatRelacao(relacao) {
   return relacao ? relacao.replaceAll('_', ' ') : 'Sem relação';
 }
 
+function MenuDotsIcon() {
+  return (
+    <svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+      <circle cx="8" cy="3" r="1.2" fill="currentColor" />
+      <circle cx="8" cy="8" r="1.2" fill="currentColor" />
+      <circle cx="8" cy="13" r="1.2" fill="currentColor" />
+    </svg>
+  );
+}
+
 export default function ListaAlunos() {
   const [alunos, setAlunos] = useState(fallbackAlunos);
   const [turmaFiltro, setTurmaFiltro] = useState('all');
@@ -213,6 +223,10 @@ export default function ListaAlunos() {
     return alunosOrdenados.filter((aluno) => aluno.turma === turmaFiltro);
   }, [alunos, turmaFiltro]);
 
+  function toggleAlunoActions(alunoId) {
+    setSelectedAlunoId((prev) => (prev === alunoId ? null : alunoId));
+  }
+
   return (
     <div className="app-shell">
       <Sidebar />
@@ -265,8 +279,25 @@ export default function ListaAlunos() {
                   {alunosFiltrados.map((aluno) => (
                     <>
                       <tr key={aluno.id}>
-                        <td onClick={() => setSelectedAlunoId((prev) => (prev === aluno.id ? null : aluno.id))} style={{ cursor: 'pointer', userSelect: 'none' }} title="Clique para ver ações">
-                          {aluno.nome}
+                        <td onClick={() => toggleAlunoActions(aluno.id)} style={{ cursor: 'pointer', userSelect: 'none' }} title="Clique para abrir o menu de opções">
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                            <span>{aluno.nome}</span>
+
+                            <button
+                              type="button"
+                              className="row-menu-trigger"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                toggleAlunoActions(aluno.id);
+                              }}
+                              aria-label={`Abrir menu de opções de ${aluno.nome}`}
+                              aria-expanded={selectedAlunoId === aluno.id}
+                              title="Abrir menu de opções"
+                            >
+                              <MenuDotsIcon />
+                              <span>Opções</span>
+                            </button>
+                          </div>
                         </td>
                         <td>{aluno.turma}</td>
                         <td>

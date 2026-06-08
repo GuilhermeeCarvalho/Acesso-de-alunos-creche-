@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Html5Qrcode } from 'html5-qrcode';
 
 import Header from '../../components/Header.jsx';
 import Navbar from '../../components/Navbar.jsx';
@@ -19,6 +20,28 @@ function formatarRelacao(relacao) {
   return relacao ? relacao.replaceAll('_', ' ') : 'Sem relação';
 }
 
+function CameraIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path
+        d="M9 4.5 7.7 6.2H5.5A2.5 2.5 0 0 0 3 8.7v7A2.5 2.5 0 0 0 5.5 18.2h13A2.5 2.5 0 0 0 21 15.7v-7a2.5 2.5 0 0 0-2.5-2.5h-2.2L15 4.5H9Z"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinejoin="round"
+      />
+      <circle
+        cx="12"
+        cy="12"
+        r="3.2"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+      />
+    </svg>
+  );
+}
+
 export default function EntradaSaida() {
   const { usuario } = useAuth();
   const [alunos, setAlunos] = useState([]);
@@ -28,9 +51,12 @@ export default function EntradaSaida() {
   const [tipo, setTipo] = useState('entrada');
   const [loadingAlunos, setLoadingAlunos] = useState(true);
   const [loadingResponsaveis, setLoadingResponsaveis] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scannerError, setScannerError] = useState('');
   const [currentTime, setCurrentTime] = useState(() => new Date());
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const scannerRef = useRef(null);
 
   useEffect(() => {
     let isActive = true;
@@ -114,7 +140,102 @@ export default function EntradaSaida() {
     [alunos, criancaId]
   );
 
+  const fecharScanner = async () => {
+    setScannerOpen(false);
+
+    if (scannerRef.current) {
+      try {
+        await scannerRef.current.stop();
+      } catch {
+        // Ignora erros de parada quando a câmera já foi liberada.
+      }
+
+      try {
+        await scannerRef.current.clear();
+      } catch {
+        // Ignora erros de limpeza do componente do scanner.
+      }
+
+      scannerRef.current = null;
+    }
+  };
+
+  const abrirScanner = () => {
+    setError('');
+    setMessage('');
+    setScannerError('');
+    setScannerOpen(true);
+  };
+
   const usuarioLogado = usuario?.email || localStorage.getItem('email') || 'Usuário autenticado';
+
+  useEffect(() => {
+    if (!scannerOpen) {
+      return undefined;
+    }
+
+    let active = true;
+    const scannerId = 'camera-reader';
+
+    async function iniciarScanner() {
+      try {
+        const scanner = new Html5Qrcode(scannerId);
+        scannerRef.current = scanner;
+
+        await scanner.start(
+          { facingMode: 'environment' },
+          {
+            fps: 10,
+            qrbox: { width: 240, height: 240 },
+          },
+          async (decodedText) => {
+            if (!active) {
+              return;
+            }
+
+            try {
+              const payload = JSON.parse(decodedText);
+              const alunoId = payload?.id;
+
+              if (!alunoId) {
+                throw new Error('QR sem identificador do aluno.');
+              }
+
+              const alunoEncontrado = alunos.find((aluno) => String(aluno.id) === String(alunoId));
+
+              if (!alunoEncontrado) {
+                throw new Error('Aluno não encontrado.');
+              }
+
+              setCriancaId(String(alunoId));
+              setResponsavelId('');
+              setError('');
+              setMessage(`Criança identificada: ${alunoEncontrado.nome}. Agora selecione o responsável para concluir.`);
+              await fecharScanner();
+            } catch {
+              setScannerError('QR Code inválido. Escaneie o QR gerado para a criança.');
+            }
+          }
+        );
+      } catch {
+        if (active) {
+          setScannerError('Não foi possível abrir a câmera do dispositivo. Verifique a permissão e tente novamente.');
+        }
+      }
+    }
+
+    iniciarScanner();
+
+    return () => {
+      active = false;
+      if (scannerRef.current) {
+        scannerRef.current.stop().catch(() => {}).finally(() => {
+          scannerRef.current?.clear().catch(() => {});
+          scannerRef.current = null;
+        });
+      }
+    };
+  }, [scannerOpen, alunos]);
 
   const extrairMensagemErro = (error) => {
     return (
@@ -215,20 +336,36 @@ export default function EntradaSaida() {
               <div className="form-grid">
                 <div className="field">
                   <label htmlFor="registro-crianca">Criança</label>
-                  <select
-                    id="registro-crianca"
-                    value={criancaId}
-                    onChange={(event) => setCriancaId(event.target.value)}
-                    disabled={loadingAlunos}
-                    required
-                  >
-                    <option value="">{loadingAlunos ? 'Carregando crianças...' : 'Selecione uma criança'}</option>
-                    {alunos.map((aluno) => (
-                      <option key={aluno.id} value={aluno.id}>
-                        {aluno.nome} {aluno.turma ? `- ${aluno.turma}` : ''}
-                      </option>
-                    ))}
-                  </select>
+                  <div style={{ display: 'flex', gap: '10px', alignItems: 'stretch' }}>
+                    <select
+                      id="registro-crianca"
+                      value={criancaId}
+                      onChange={(event) => setCriancaId(event.target.value)}
+                      disabled={loadingAlunos}
+                      required
+                      style={{ flex: 1 }}
+                    >
+                      <option value="">{loadingAlunos ? 'Carregando crianças...' : 'Selecione uma criança'}</option>
+                      {alunos.map((aluno) => (
+                        <option key={aluno.id} value={aluno.id}>
+                          {aluno.nome} {aluno.turma ? `- ${aluno.turma}` : ''}
+                        </option>
+                      ))}
+                    </select>
+
+                    <button
+                      type="button"
+                      className="button button--secondary"
+                      onClick={abrirScanner}
+                      disabled={loadingAlunos}
+                      aria-label="Abrir câmera para ler QR Code"
+                      title="Abrir câmera para ler QR Code"
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}
+                    >
+                      <CameraIcon />
+                      Ler QR
+                    </button>
+                  </div>
                 </div>
 
                 <div className="field">
@@ -282,6 +419,56 @@ export default function EntradaSaida() {
           </section>
         </main>
       </div>
+
+      {scannerOpen && (
+        <div
+          className="modal"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1200,
+          }}
+        >
+          <div
+            className="modal__content"
+            style={{
+              background: '#fff',
+              padding: '20px',
+              borderRadius: '12px',
+              width: '520px',
+              maxWidth: '96%',
+              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.22)',
+            }}
+          >
+            <h3 style={{ marginTop: 0 }}>Ler QR Code</h3>
+            <p style={{ marginTop: '8px' }}>Aponte a câmera para o QR Code da criança. Após ler, selecione o responsável para concluir o registro.</p>
+
+            <div
+              id="camera-reader"
+              style={{
+                width: '100%',
+                minHeight: '320px',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                background: '#111',
+                marginTop: '16px',
+              }}
+            />
+
+            {scannerError && <div className="notice notice--error" style={{ marginTop: '12px' }}>{scannerError}</div>}
+
+            <div className="actions-row" style={{ marginTop: '16px', justifyContent: 'flex-end' }}>
+              <button type="button" className="button button--secondary" onClick={fecharScanner}>
+                Fechar câmera
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
