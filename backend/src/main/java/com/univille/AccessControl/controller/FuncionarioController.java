@@ -50,4 +50,16 @@ public class FuncionarioController {
     public List<FuncionarioListDTO> listar() {
         return service.listarTodos();
     }
+
+    @Operation(summary = "Excluir funcionário", description = "Remove um funcionário do sistema.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Funcionário excluído com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Funcionário não encontrado"),
+            @ApiResponse(responseCode = "403", description = "Acesso negado")
+    })
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> excluir(@PathVariable Long id) {
+        service.excluir(id);
+        return ResponseEntity.noContent().build();
+    }
 }
