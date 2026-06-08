@@ -4,6 +4,7 @@ import Header from '../../components/Header.jsx';
 import Navbar from '../../components/Navbar.jsx';
 import Sidebar from '../../components/Sidebar.jsx';
 import Table from '../../components/Table.jsx';
+import { listAlunos } from '../../services/alunoService.js';
 import { listRegistros } from '../../services/registroService.js';
 
 const fallbackRegistros = [
@@ -36,26 +37,58 @@ function formatarDataHora(dataHora) {
   }).format(new Date(dataHora));
 }
 
+function formatarDataFiltro(dataHora) {
+  if (!dataHora) {
+    return '';
+  }
+
+  const data = new Date(dataHora);
+  const ano = data.getFullYear();
+  const mes = String(data.getMonth() + 1).padStart(2, '0');
+  const dia = String(data.getDate()).padStart(2, '0');
+
+  return `${ano}-${mes}-${dia}`;
+}
+
 function normalizarRegistro(registro) {
 
   return {
     id: registro.id,
+    criancaId: registro.crianca?.id ?? null,
     crianca: registro.crianca?.nome || registro.crianca || 'Sem criança',
     turma: registro.crianca?.turma || 'Sem turma',
     responsavel: registro.responsavel?.nome || registro.responsavel || 'Sem responsável',
     funcionario: registro.funcionario?.nome || registro.funcionario || 'Sem funcionário',
     tipo: registro.tipo ? registro.tipo.replaceAll('_', ' ') : 'Sem tipo',
     dataHora: formatarDataHora(registro.dataHora),
+    dataHoraOriginal: registro.dataHora,
   };
 }
 
 export default function Relatorio() {
-  const [registros, setRegistros] = useState(fallbackRegistros);
+  const [registros, setRegistros] = useState(() => fallbackRegistros.map(normalizarRegistro));
+  const [alunos, setAlunos] = useState([]);
   const [turmaFiltro, setTurmaFiltro] = useState('all');
-  const [tipoFiltro, setTipoFiltro] = useState('all');
+  const [alunoFiltro, setAlunoFiltro] = useState('all');
+  const [dataInicialFiltro, setDataInicialFiltro] = useState('');
+  const [dataFinalFiltro, setDataFinalFiltro] = useState('');
 
   useEffect(() => {
     let isActive = true;
+
+    async function loadAlunos() {
+      try {
+        const data = await listAlunos();
+
+        if (isActive && Array.isArray(data)) {
+          setAlunos(data);
+        }
+      } catch {
+        if (isActive) {
+          setAlunos([]);
+        }
+      }
+    }
 
     async function loadRegistros() {
       try {
@@ -71,6 +104,7 @@ export default function Relatorio() {
       }
     }
 
+    loadAlunos();
     loadRegistros();
 
     return () => {
@@ -86,17 +120,59 @@ export default function Relatorio() {
     );
   }, [registros]);
 
+  const alunosDisponiveis = useMemo(() => {
+    const baseAlunos = Array.isArray(alunos) && alunos.length > 0
+      ? alunos
+      : Array.from(
+          new Map(
+            registros
+              .filter((registro) => registro.crianca)
+              .map((registro, index) => [
+                `${registro.criancaId || registro.crianca}-${registro.turma || index}`,
+                {
+                  id: registro.criancaId || registro.crianca,
+                  nome: registro.crianca,
+                  turma: registro.turma,
+                },
+              ])
+          ).values()
+        );
+
+    return baseAlunos
+      .filter((aluno) => turmaFiltro === 'all' || aluno.turma === turmaFiltro)
+      .sort((a, b) =>
+        String(a.nome || '').localeCompare(String(b.nome || ''), 'pt-BR', {
+          sensitivity: 'base',
+        })
+      );
+  }, [alunos, registros, turmaFiltro]);
+
+  useEffect(() => {
+    setAlunoFiltro('all');
+  }, [turmaFiltro]);
+
   const registrosFiltrados = useMemo(() => {
     return registros.filter((registro) => {
       const passaTurma =
         turmaFiltro === 'all' || registro.turma === turmaFiltro;
 
-      const passaTipo =
-        tipoFiltro === 'all' || registro.tipo === tipoFiltro;
+      const alunoSelecionado = alunosDisponiveis.find(
+        (aluno) => String(aluno.id) === String(alunoFiltro)
+      );
 
-      return passaTurma && passaTipo;
+      const passaAluno =
+        alunoFiltro === 'all' ||
+        (registro.criancaId
+          ? String(registro.criancaId) === String(alunoFiltro)
+          : registro.crianca === alunoSelecionado?.nome);
+
+      const dataRegistro = formatarDataFiltro(registro.dataHoraOriginal);
+      const passaDataInicial = !dataInicialFiltro || dataRegistro >= dataInicialFiltro;
+      const passaDataFinal = !dataFinalFiltro || dataRegistro <= dataFinalFiltro;
+
+      return passaTurma && passaAluno && passaDataInicial && passaDataFinal;
     });
-  }, [registros, turmaFiltro, tipoFiltro]);
+  }, [registros, turmaFiltro, alunoFiltro, alunosDisponiveis, dataInicialFiltro, dataFinalFiltro]);
 
   return (
     <div className="app-shell">
@@ -151,18 +227,45 @@ export default function Relatorio() {
                 </label>
 
                 <label className="field">
-                  <span>Filtrar por tipo</span>
+                  <span>Filtrar por aluno</span>
 
                   <select
-                    value={tipoFiltro}
+                    value={alunoFiltro}
                     onChange={(event) =>
-                      setTipoFiltro(event.target.value)
+                      setAlunoFiltro(event.target.value)
                     }
+                    disabled={turmaFiltro === 'all'}
                   >
-                    <option value="all">Todos</option>
-                    <option value="ENTRADA">ENTRADA</option>
-                    <option value="SAIDA">SAÍDA</option>
+                    <option value="all">
+                      {turmaFiltro === 'all' ? 'Selecione uma turma primeiro' : 'Todos os alunos'}
+                    </option>
+
+                    {alunosDisponiveis.map((aluno) => (
+                      <option key={aluno.id} value={aluno.id}>
+                        {aluno.nome}
+                      </option>
+                    ))}
                   </select>
+                </label>
+
+                <label className="field">
+                  <span>Data inicial</span>
+
+                  <input
+                    type="date"
+                    value={dataInicialFiltro}
+                    onChange={(event) => setDataInicialFiltro(event.target.value)}
+                  />
+                </label>
+
+                <label className="field">
+                  <span>Data final</span>
+
+                  <input
+                    type="date"
+                    value={dataFinalFiltro}
+                    onChange={(event) => setDataFinalFiltro(event.target.value)}
+                  />
                 </label>
               </div>
 
