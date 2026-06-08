@@ -5,16 +5,19 @@ import Navbar from '../components/Navbar.jsx';
 import Sidebar from '../components/Sidebar.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 
-const cards = [
-  { title: 'Cadastro de alunos', description: 'Registre novas crianças e acompanhe as turmas.', to: '/alunos/cadastro', span: 'card--span-4' },
-  { title: 'Lista de alunos', description: 'Veja a base atual com filtros e ações futuras.', to: '/alunos', span: 'card--span-4' },
-  { title: 'Entrada e saída', description: 'Registre horários com precisão e rastreabilidade.', to: '/registros/entrada-saida', span: 'card--span-4' },
-  { title: 'Funcionários', description: 'Gerencie os profissionais vinculados à creche.', to: '/funcionarios/cadastro', span: 'card--span-6' },
-  { title: 'Relatórios', description: 'Acesse um resumo dos lançamentos feitos no sistema.', to: '/registros/relatorio', span: 'card--span-6' },
-];
-
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
+
+  const cards = [
+    { title: 'Cadastro de alunos', description: 'Registre novas crianças e acompanhe as turmas.', to: '/alunos/cadastro', span: 'card--span-4' },
+    { title: 'Lista de alunos', description: 'Veja a base atual com filtros e ações futuras.', to: '/alunos', span: 'card--span-4' },
+    { title: 'Entrada e saída', description: 'Registre horários com precisão e rastreabilidade.', to: '/registros/entrada-saida', span: 'card--span-4' },
+    ...(isAdmin
+      ? [{ title: 'Funcionários', description: 'Gerencie os profissionais vinculados à creche.', to: '/funcionarios', span: 'card--span-6' }]
+      : []),
+    { title: 'Relatórios', description: 'Acesse um resumo dos lançamentos feitos no sistema.', to: '/registros/relatorio', span: isAdmin ? 'card--span-6' : 'card--span-12' },
+  ];
 
   return (
     <div className="app-shell">

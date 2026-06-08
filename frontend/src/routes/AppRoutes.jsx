@@ -4,6 +4,7 @@ import ProtectedRoute from '../components/ProtectedRoute.jsx';
 import CadastroAluno from '../pages/alunos/CadastroAluno.jsx';
 import ListaAlunos from '../pages/alunos/ListaAlunos.jsx';
 import CadastroFuncionario from '../pages/funcionarios/CadastroFuncionario.jsx';
+import ListaFuncionarios from '../pages/funcionarios/ListaFuncionarios.jsx';
 import Home from '../pages/Home.jsx';
 import Login from '../pages/auth/Login.jsx';
 import EntradaSaida from '../pages/registros/EntradaSaida.jsx';
@@ -41,8 +42,16 @@ export default function AppRoutes() {
         <Route
           path="/funcionarios/cadastro"
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredRole="ADMIN">
               <CadastroFuncionario />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/funcionarios"
+          element={
+            <ProtectedRoute requiredRole="ADMIN">
+              <ListaFuncionarios />
             </ProtectedRoute>
           }
         />

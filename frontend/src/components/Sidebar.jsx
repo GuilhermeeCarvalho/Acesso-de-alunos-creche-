@@ -11,9 +11,14 @@ export default function Sidebar() {
     { to: '/home', label: 'Início' },
     { to: '/alunos/cadastro', label: 'Cadastro de aluno' },
     { to: '/alunos', label: 'Lista de alunos' },
-    ...(isAdmin ? [{ to: '/funcionarios/cadastro', label: 'Cadastro de funcionário' }] : []),
     { to: '/registros/entrada-saida', label: 'Entrada e saída' },
     { to: '/registros/relatorio', label: 'Relatório' },
+    ...(isAdmin
+      ? [
+          { to: '/funcionarios', label: 'Funcionários' },
+          { to: '/funcionarios/cadastro', label: 'Cadastro de funcionário' },
+        ]
+      : []),
   ];
 
   return (

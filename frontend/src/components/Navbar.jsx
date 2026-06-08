@@ -3,13 +3,14 @@ import { useAuth } from "../contexts/AuthContext";
 
 export default function Navbar() {
     const { user, logout } = useAuth();
+    const isAdmin = user?.role === 'ADMIN';
 
     return (
         <nav className="navbar">
             <div className="navbar-left">
                 <Link to="/home">Início</Link>
                 <Link to="/alunos">Alunos</Link>
-                <Link to="/funcionarios">Funcionários</Link>
+                {isAdmin && <Link to="/funcionarios">Funcionários</Link>}
             </div>
             <div className="navbar-right">
                 {user && (

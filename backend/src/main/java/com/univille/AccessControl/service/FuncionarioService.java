@@ -1,6 +1,7 @@
 package com.univille.AccessControl.service;
 
 import com.univille.AccessControl.exception.EmailJaCadastradoException;
+import com.univille.AccessControl.dto.FuncionarioListDTO;
 import com.univille.AccessControl.model.Funcionario;
 import com.univille.AccessControl.repository.FuncionarioRepository;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -36,7 +37,9 @@ public class FuncionarioService {
         return repository.save(funcionario);
     }
 
-    public List<Funcionario> listarTodos() {
-        return repository.findAll();
+    public List<FuncionarioListDTO> listarTodos() {
+        return repository.findAll().stream()
+                .map(FuncionarioListDTO::fromEntity)
+                .toList();
     }
 }

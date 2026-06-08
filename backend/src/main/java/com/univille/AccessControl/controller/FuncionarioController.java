@@ -1,6 +1,7 @@
 package com.univille.AccessControl.controller;
 
 import com.univille.AccessControl.config.OpenApiConfig;
+import com.univille.AccessControl.dto.FuncionarioListDTO;
 import com.univille.AccessControl.model.Funcionario;
 import com.univille.AccessControl.service.FuncionarioService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -46,7 +47,7 @@ public class FuncionarioController {
             @ApiResponse(responseCode = "403", description = "Acesso negado")
     })
     @GetMapping
-    public List<Funcionario> listar() {
+    public List<FuncionarioListDTO> listar() {
         return service.listarTodos();
     }
 }
