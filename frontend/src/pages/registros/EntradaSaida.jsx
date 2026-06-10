@@ -141,24 +141,24 @@ export default function EntradaSaida() {
   );
 
   const fecharScanner = async () => {
-    setScannerOpen(false);
-
-    if (scannerRef.current) {
-      try {
-        await scannerRef.current.stop();
-      } catch {
-        // Ignora erros de parada quando a câmera já foi liberada.
-      }
-
-      try {
-        await scannerRef.current.clear();
-      } catch {
-        // Ignora erros de limpeza do componente do scanner.
-      }
-
-      scannerRef.current = null;
+  if (scannerRef.current) {
+    try {
+      await scannerRef.current.stop();
+    } catch (error) {
+      console.warn("Erro ao parar o scanner:", error);
     }
-  };
+
+    try {
+      await scannerRef.current.clear();
+    } catch (error) {
+      console.warn("Erro ao limpar o scanner:", error);
+    }
+
+    scannerRef.current = null;
+  }
+
+  setScannerOpen(false);
+};
 
   const abrirScanner = () => {
     setError('');
