@@ -1,8 +1,15 @@
 package com.univille.AccessControl.model;
 
-import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.validation.constraints.NotBlank;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Data
@@ -19,4 +26,7 @@ public class Crianca {
 
     @NotBlank(message = "Turma é obrigatória")
     private String turma;
+
+    private String documentoPath;
+    private LocalDateTime documentoAtualizadoEm;
 }
