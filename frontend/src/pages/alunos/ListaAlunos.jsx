@@ -68,12 +68,9 @@ export default function ListaAlunos() {
   }
 
   function downloadQrPdf() {
-    if (!qrAluno) {
-      return;
-    }
+    if (!qrAluno) return;
 
     const canvas = qrCanvasWrapperRef.current?.querySelector('canvas');
-
     if (!canvas) {
       alert('Não foi possível gerar o PDF do QR Code.');
       return;
@@ -82,33 +79,66 @@ export default function ListaAlunos() {
     const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
-    const marginX = 16;
-    const topY = 20;
-    const columnGap = 12;
-    const qrSize = 72;
-    const leftColumnWidth = pageWidth - (marginX * 2) - columnGap - qrSize;
-    const rightColumnX = pageWidth - marginX - qrSize;
+
+    // card size in mm (10cm x 6cm)
+    const cardW = 100;
+    const cardH = 60;
+    const cardX = (pageWidth - cardW) / 2; // center horizontally
+    const cardY = 28; // top offset on the A4 page
+    const padding = 6;
+let qrSize = 34; // QR inside card
+
+    // draw card
+    pdf.setFillColor(246, 248, 254);
+    pdf.setDrawColor(216, 224, 235);
+    pdf.roundedRect(cardX, cardY, cardW, cardH, 6, 6, 'F');
+    pdf.roundedRect(cardX, cardY, cardW, cardH, 6, 6, 'S');
+
+    // title inside card
+    const infoX = cardX + padding;
+    const titleY = cardY + 10;
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(16);
+    pdf.setTextColor(28, 44, 74);
+    pdf.text('Cartão QR do aluno', infoX, titleY);
+
+    // subtitle with forced wrapping
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(9);
+    pdf.setTextColor(90, 98, 118);
+    const subtitleMaxW = cardW - qrSize - padding * 2 - 6;
+    const subtitleLines = pdf.splitTextToSize('Use este QR para registrar o aluno na entrada e saída da creche.', subtitleMaxW);
+    pdf.text(subtitleLines, infoX, titleY + 6);
+
+    // info text start position below subtitle
+    const infoStartY = titleY + 6 + subtitleLines.length * 5 + 4;
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(10);
+    pdf.setTextColor(35, 45, 67);
+    pdf.text('Aluno:', infoX, infoStartY);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(10.5);
+    pdf.setTextColor(18, 28, 48);
+    pdf.text(qrAluno.nome || 'Não informado', infoX, infoStartY + 4);
 
     pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(18);
-    pdf.text('QR Code do aluno', marginX, topY);
-
+    pdf.setFontSize(10);
+    pdf.setTextColor(35, 45, 67);
+    pdf.text('Turma:', infoX, infoStartY + 10);
     pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(12);
-    const textLines = [
-      `Nome: ${qrAluno.nome || 'Não informado'}`,
-      `Turma: ${qrAluno.turma || 'Não informada'}`,
-    ];
+    pdf.setFontSize(10.5);
+    pdf.setTextColor(18, 28, 48);
+    pdf.text(qrAluno.turma || 'Não informada', infoX, infoStartY + 14);
 
-    const wrappedLines = textLines.flatMap((line) => pdf.splitTextToSize(line, leftColumnWidth));
-    pdf.text(wrappedLines, marginX, topY + 14);
-
+    // QR on the right of the card, centered vertically
+    qrSize = 36;
+    const qrX = cardX + cardW - padding - qrSize;
+    const qrY = cardY + (cardH - qrSize) / 2;
     const qrImage = canvas.toDataURL('image/png');
-    const qrImageY = topY + 4;
-    pdf.addImage(qrImage, 'PNG', rightColumnX, qrImageY, qrSize, qrSize);
-
-    pdf.setDrawColor(220, 220, 220);
-    pdf.line(pageWidth / 2, topY, pageWidth / 2, pageHeight - topY);
+    pdf.setFillColor(255, 255, 255);
+    pdf.setDrawColor(204, 212, 225);
+    pdf.roundedRect(qrX - 2, qrY - 2, qrSize + 4, qrSize + 4, 4, 4, 'FD');
+    pdf.addImage(qrImage, 'PNG', qrX, qrY, qrSize, qrSize);
 
     pdf.save(`qr-code-${String(qrAluno.nome || 'aluno').replaceAll(' ', '-').toLowerCase()}.pdf`);
   }
