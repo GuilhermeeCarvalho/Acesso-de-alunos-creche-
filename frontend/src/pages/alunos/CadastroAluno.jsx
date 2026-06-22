@@ -220,10 +220,10 @@ export default function CadastroAluno() {
 
                 {precisaPlantao && (
                   <div className="field field--full">
-                    <label>Documento (JPG/PNG, até 5MB)</label>
+                    <label>Documento (JPG até 5MB)</label>
                     <input
                       type="file"
-                      accept="image/png, image/jpeg"
+                      accept="image/jpeg"
                       onChange={(e) => setArquivoDocumento(e.target.files?.[0] || null)}
                     />
                   </div>

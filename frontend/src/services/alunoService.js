@@ -5,6 +5,11 @@ export async function listAlunos() {
   return unwrapResponse(response);
 }
 
+export async function getDocumento(id) {
+  const response = await api.get(`/criancas/${id}/documento`);
+  return unwrapResponse(response);
+}
+
 export async function createAluno(payload) {
   const response = await api.post('/criancas', payload);
   return unwrapResponse(response);

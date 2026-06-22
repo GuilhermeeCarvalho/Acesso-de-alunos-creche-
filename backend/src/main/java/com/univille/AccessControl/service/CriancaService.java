@@ -2,11 +2,9 @@ package com.univille.AccessControl.service;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -53,19 +51,14 @@ public class CriancaService {
         String supabaseUrl = getEnvVar("SUPABASE_URL");
         String serviceKey = getEnvVar("SUPABASE_SERVICE_KEY");
         String objetoPath = construirCaminhoDoObjeto(id, arquivo.getOriginalFilename());
-
-        if (crianca.getDocumentoPath() != null &&
-    !crianca.getDocumentoPath().isBlank()) {
-
-    excluirDocumentoAnterior(
-        bucket,
-        supabaseUrl,
-        serviceKey,
-        crianca.getDocumentoPath()
-    );
-}
+        String documentoAnterior = crianca.getDocumentoPath();
 
         uploadDocumentoParaSupabase(bucket, supabaseUrl, serviceKey, objetoPath, arquivo);
+
+        if (documentoAnterior != null && !documentoAnterior.isBlank()) {
+            excluirDocumentoAnterior(bucket, supabaseUrl, serviceKey, documentoAnterior);
+        }
+
         crianca.setDocumentoPath(objetoPath);
         crianca.setDocumentoAtualizadoEm(LocalDateTime.now());
         crianca.setPrecisaPlantao(true);
@@ -74,80 +67,75 @@ public class CriancaService {
     }
 
     public Map<String, Object> buscarDocumento(Long id) {
+        Crianca crianca = criancaRepository.findById(id)
+            .orElseThrow(() -> new RecursoNaoEncontradoException("Criança não encontrada"));
 
-    Crianca crianca = criancaRepository.findById(id)
-            .orElseThrow(() ->
-                    new RecursoNaoEncontradoException(
-                            "Criança não encontrada"));
+        String documentoPath = crianca.getDocumentoPath();
+        if (documentoPath == null || documentoPath.isBlank()) {
+        throw new RecursoNaoEncontradoException("Documento não encontrado para a criança");
+        }
 
-    Map<String, Object> dados = new HashMap<>();
+        Map<String, Object> dados = new HashMap<>();
+        dados.put("documentoPath", documentoPath);
+        dados.put("documentoAtualizadoEm", crianca.getDocumentoAtualizadoEm());
+        dados.put("signedUrl", gerarSignedUrl(documentoPath));
 
-    dados.put(
-            "documentoUrl",
-            gerarSignedUrl(
-                    crianca.getDocumentoPath()));
-
-    dados.put(
-            "documentoAtualizadoEm",
-            crianca.getDocumentoAtualizadoEm());
-
-    return dados;
-}
+        return dados;
+    }
 
     private String gerarSignedUrl(String documentoPath) {
+        String bucket = getEnvVar("SUPABASE_BUCKET");
+        String supabaseUrl = getEnvVar("SUPABASE_URL");
+        String serviceKey = getEnvVar("SUPABASE_SERVICE_KEY");
 
-    String bucket = getEnvVar("SUPABASE_BUCKET");
-    String supabaseUrl = getEnvVar("SUPABASE_URL");
-    String serviceKey = getEnvVar("SUPABASE_SERVICE_KEY");
-
-    try {
-
-        String body = """
-        {
-          "expiresIn": 3600
+        try {
+            String body = """
+            {
+              "expiresIn": 3600
         }
-        """;
+            """;
 
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(
-                        supabaseUrl +
-                        "/storage/v1/object/sign/" +
-                        bucket +
-                        "/" +
-                        documentoPath))
-                .header("apikey", serviceKey)
-                .header("Authorization", "Bearer " + serviceKey)
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(body))
-                .build();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(
+                            supabaseUrl +
+                            "/storage/v1/object/sign/" +
+                            bucket +
+                            "/" +
+                            documentoPath))
+                    .header("apikey", serviceKey)
+                    .header("Authorization", "Bearer " + serviceKey)
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(body))
+                    .build();
 
-        HttpClient client = HttpClient.newHttpClient();
+            HttpClient client = HttpClient.newHttpClient();
+            HttpResponse<String> response = client.send(
+                    request,
+                    HttpResponse.BodyHandlers.ofString());
 
-        HttpResponse<String> response =
-                client.send(request,
-                        HttpResponse.BodyHandlers.ofString());
+            System.out.println("STATUS SIGNED URL: " + response.statusCode());
+            System.out.println("BODY SIGNED URL: " + response.body());
 
-        if (response.statusCode() >= 400) {
-            throw new RuntimeException(
-                    "Erro ao gerar Signed URL: " +
-                    response.body());
+            if (response.statusCode() >= 400) {
+                throw new RuntimeException("Erro ao gerar Signed URL: " + response.body());
+            }
+
+            ObjectMapper mapper = new ObjectMapper();
+            JsonNode json = mapper.readTree(response.body());
+
+            JsonNode signedUrlNode = json.get("signedURL"); // <-- teste com signedURL
+            if (signedUrlNode == null || signedUrlNode.asText().isBlank()) {
+                throw new RuntimeException("Resposta do Supabase não trouxe signedURL: " + response.body());
+            }
+
+            String signedPath = signedUrlNode.asText();
+
+            return supabaseUrl + "/storage/v1" + signedPath;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Erro ao gerar Signed URL", e);
         }
-
-        ObjectMapper mapper = new ObjectMapper();
-        JsonNode json = mapper.readTree(response.body());
-
-        String signedPath = json.get("signedURL").asText();
-
-        return supabaseUrl +
-                "/storage/v1" +
-                signedPath;
-
-    } catch (Exception e) {
-        throw new RuntimeException(
-                "Erro ao gerar Signed URL",
-                e);
     }
-}
 
     private void validarArquivoDocumento(MultipartFile arquivo) {
         if (arquivo == null || arquivo.isEmpty()) {
@@ -155,8 +143,8 @@ public class CriancaService {
         }
 
         String contentType = arquivo.getContentType();
-        if (contentType == null || !(contentType.equals("image/jpeg") || contentType.equals("image/jpg") || contentType.equals("image/png"))) {
-            throw new IllegalArgumentException("O documento deve ser uma imagem JPG, JPEG ou PNG.");
+        if (contentType == null || !(contentType.equals("image/jpeg") || contentType.equals("image/jpg"))) {
+            throw new IllegalArgumentException("O documento deve ser uma imagem JPG ou JPEG.");
         }
 
         long tamanhoMaximo = 5 * 1024 * 1024;
@@ -220,31 +208,38 @@ public class CriancaService {
 }
 
     private void excluirDocumentoAnterior(String bucket, String supabaseUrl, String serviceKey, String documentoPath) {
-        if (documentoPath == null || documentoPath.isBlank()) {
-            return;
-        }
-
-        try {
-            String caminhoCodificado = URLEncoder.encode(documentoPath, StandardCharsets.UTF_8);
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(String.format("%s/storage/v1/object/%s?path=%s", supabaseUrl, bucket, caminhoCodificado)))
-                    .header("apikey", serviceKey)
-                    .header("Authorization", "Bearer " + serviceKey)
-                    .DELETE()
-                    .build();
-
-            HttpClient client = HttpClient.newHttpClient();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() >= 400) {
-                throw new RuntimeException("Falha ao excluir documento anterior do Supabase Storage: " + response.body());
-            }
-        } catch (IOException ex) {
-            throw new RuntimeException("Falha ao excluir documento anterior do Supabase Storage.", ex);
-        } catch (InterruptedException ex) {
-            Thread.currentThread().interrupt();
-            throw new RuntimeException("Falha ao excluir documento anterior do Supabase Storage.", ex);
-        }
+    if (documentoPath == null || documentoPath.isBlank()) {
+        return;
     }
+
+    try {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(
+                        supabaseUrl +
+                        "/storage/v1/object/" +
+                        bucket +
+                        "/" +
+                        documentoPath))
+                .header("apikey", serviceKey)
+                .header("Authorization", "Bearer " + serviceKey)
+                .DELETE()
+                .build();
+
+        HttpClient client = HttpClient.newHttpClient();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() >= 400) {
+            throw new RuntimeException(
+                    "Falha ao excluir documento do Supabase Storage: " + response.body());
+        }
+
+    } catch (IOException ex) {
+        throw new RuntimeException("Falha ao excluir documento do Supabase Storage.", ex);
+    } catch (InterruptedException ex) {
+        Thread.currentThread().interrupt();
+        throw new RuntimeException("Falha ao excluir documento do Supabase Storage.", ex);
+    }
+}
 
     private String getEnvVar(String name) {
         String value = System.getenv(name);
@@ -277,8 +272,15 @@ public class CriancaService {
 
     @Transactional
     public void remover(Long id) {
-        if (!criancaRepository.existsById(id)) {
-            throw new RecursoNaoEncontradoException("Criança não encontrada");
+        Crianca crianca = criancaRepository.findById(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Criança não encontrada"));
+
+        String documentoPath = crianca.getDocumentoPath();
+        if (documentoPath != null && !documentoPath.isBlank()) {
+            String bucket = getEnvVar("SUPABASE_BUCKET");
+            String supabaseUrl = getEnvVar("SUPABASE_URL");
+            String serviceKey = getEnvVar("SUPABASE_SERVICE_KEY");
+            excluirDocumentoAnterior(bucket, supabaseUrl, serviceKey, documentoPath);
         }
 
         registroRepository.deleteByCriancaId(id);

@@ -5,7 +5,7 @@ import { jsPDF } from 'jspdf';
 import Header from '../../components/Header.jsx';
 import Navbar from '../../components/Navbar.jsx';
 import Sidebar from '../../components/Sidebar.jsx';
-import { listAlunos, updateAluno, deleteAluno, uploadDocumento } from '../../services/alunoService.js';
+import { listAlunos, updateAluno, deleteAluno, uploadDocumento, getDocumento } from '../../services/alunoService.js';
 import { listResponsaveisDaCrianca, createResponsavel, updateResponsavel, deleteResponsavel, deleteVinculo } from '../../services/responsavelService.js';
 import { createVinculo } from '../../services/vinculoService.js';
 
@@ -50,6 +50,11 @@ export default function ListaAlunos() {
   const [showEdit, setShowEdit] = useState(false);
   const [editingFile, setEditingFile] = useState(null);
   const [addingResponsavelFor, setAddingResponsavelFor] = useState(null);
+  const [documentoModalOpen, setDocumentoModalOpen] = useState(false);
+  const [documentoModalUrl, setDocumentoModalUrl] = useState('');
+  const [documentoModalNome, setDocumentoModalNome] = useState('');
+  const [documentoModalPath, setDocumentoModalPath] = useState('');
+  const [documentoModalLoading, setDocumentoModalLoading] = useState(false);
   const [newResponsavel, setNewResponsavel] = useState({ nome: '', telefone: '', relacao: 'RESPONSAVEL_LEGAL' });
   const [selectedAlunoId, setSelectedAlunoId] = useState(null);
   const [selectedResponsavelId, setSelectedResponsavelId] = useState(null);
@@ -202,6 +207,34 @@ let qrSize = 34; // QR inside card
   function handleStartEdit(aluno) {
     setEditingAluno({ id: aluno.id, nome: aluno.nome || '', turma: aluno.turma || '', precisaPlantao: aluno.precisaPlantao || false, documentoPath: aluno.documentoPath || '' });
     setShowEdit(true);
+  }
+
+  async function handleViewDocumento(aluno) {
+    setDocumentoModalLoading(true);
+    try {
+      const documento = await getDocumento(aluno.id);
+      if (!documento?.signedUrl) {
+        throw new Error('Não foi possível gerar a URL de visualização do documento.');
+      }
+
+      setDocumentoModalNome(aluno.nome || 'Documento');
+      setDocumentoModalPath(documento.documentoPath || '');
+      setDocumentoModalUrl(documento.signedUrl);
+      setDocumentoModalOpen(true);
+    } catch (err) {
+      console.error(err);
+      const message = err?.response?.data?.message || err?.message || 'Não foi possível carregar o documento.';
+      alert(message);
+    } finally {
+      setDocumentoModalLoading(false);
+    }
+  }
+
+  function handleCloseDocumentoModal() {
+    setDocumentoModalOpen(false);
+    setDocumentoModalUrl('');
+    setDocumentoModalPath('');
+    setDocumentoModalNome('');
   }
 
   async function handleSaveEdit() {
@@ -477,6 +510,16 @@ let qrSize = 34; // QR inside card
                               <button type="button" className="button button--secondary button--small" onClick={() => handleGenerateQr(aluno)}>
                                 Gerar QR
                               </button>
+                              {aluno.documentoPath && (
+                                <button
+                                  type="button"
+                                  className="button button--secondary button--small"
+                                  onClick={() => handleViewDocumento(aluno)}
+                                  disabled={documentoModalLoading}
+                                >
+                                  Visualizar documento
+                                </button>
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -525,6 +568,41 @@ let qrSize = 34; // QR inside card
               </div>
             )}
 
+            {documentoModalOpen && (
+              <div
+                className="modal"
+                style={{
+                  position: 'fixed',
+                  inset: 0,
+                  background: 'rgba(0,0,0,0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 1000,
+                }}
+              >
+                <div className="modal__content" style={{ background: '#fff', padding: '20px', borderRadius: '6px', width: '640px', maxWidth: '96%' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', marginBottom: '18px' }}>
+                    <div>
+                      <h3 style={{ margin: 0 }}>Documento de {documentoModalNome}</h3>
+                      <p style={{ margin: '6px 0 0', color: '#5f6c85', fontSize: '0.95rem' }}>{documentoModalPath}</p>
+                    </div>
+                    <button type="button" className="button button--secondary button--small" onClick={handleCloseDocumentoModal}>
+                      Fechar
+                    </button>
+                  </div>
+
+                  <div style={{ display: 'flex', justifyContent: 'center', minHeight: '240px', background: '#f8fafc', borderRadius: '8px', overflow: 'hidden' }}>
+                    <img
+                      src={documentoModalUrl}
+                      alt={`Documento de ${documentoModalNome}`}
+                      style={{ maxWidth: '100%', maxHeight: '520px', objectFit: 'contain', display: 'block' }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             {showEdit && editingAluno && (
               <div
                 className="modal"
@@ -563,8 +641,8 @@ let qrSize = 34; // QR inside card
                     </div>
                     {editingAluno.precisaPlantao && (
                       <div className="field">
-                        <label>Documento (JPG/PNG, até 5MB)</label>
-                        <input type="file" accept="image/png, image/jpeg" onChange={(e) => setEditingFile(e.target.files[0])} />
+                        <label>Documento (JPG até 5MB)</label>
+                        <input type="file" accept="image/jpeg" onChange={(e) => setEditingFile(e.target.files[0])} />
                         {editingAluno.documentoPath && <div style={{ marginTop: '8px', fontSize: '12px' }}>Documento existente: {editingAluno.documentoPath}</div>}
                       </div>
                     )}
