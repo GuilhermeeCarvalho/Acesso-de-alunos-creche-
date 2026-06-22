@@ -5,7 +5,7 @@ import { jsPDF } from 'jspdf';
 import Header from '../../components/Header.jsx';
 import Navbar from '../../components/Navbar.jsx';
 import Sidebar from '../../components/Sidebar.jsx';
-import { listAlunos, updateAluno, deleteAluno } from '../../services/alunoService.js';
+import { listAlunos, updateAluno, deleteAluno, uploadDocumento } from '../../services/alunoService.js';
 import { listResponsaveisDaCrianca, createResponsavel, updateResponsavel, deleteResponsavel, deleteVinculo } from '../../services/responsavelService.js';
 import { createVinculo } from '../../services/vinculoService.js';
 
@@ -48,6 +48,7 @@ export default function ListaAlunos() {
   const [turmaFiltro, setTurmaFiltro] = useState('all');
   const [editingAluno, setEditingAluno] = useState(null);
   const [showEdit, setShowEdit] = useState(false);
+  const [editingFile, setEditingFile] = useState(null);
   const [addingResponsavelFor, setAddingResponsavelFor] = useState(null);
   const [newResponsavel, setNewResponsavel] = useState({ nome: '', telefone: '', relacao: 'RESPONSAVEL_LEGAL' });
   const [selectedAlunoId, setSelectedAlunoId] = useState(null);
@@ -199,15 +200,37 @@ let qrSize = 34; // QR inside card
   }
 
   function handleStartEdit(aluno) {
-    setEditingAluno({ id: aluno.id, nome: aluno.nome || '', turma: aluno.turma || '' });
+    setEditingAluno({ id: aluno.id, nome: aluno.nome || '', turma: aluno.turma || '', precisaPlantao: aluno.precisaPlantao || false, documentoPath: aluno.documentoPath || '' });
     setShowEdit(true);
   }
 
   async function handleSaveEdit() {
     try {
-      await updateAluno(editingAluno.id, { nome: editingAluno.nome, turma: editingAluno.turma });
+      // validação: se marcou plantão e não há documento no registro e usuário não enviou arquivo, bloquear
+      if (editingAluno.precisaPlantao && !(editingAluno.documentoPath) && !editingFile) {
+        alert('Crianças que utilizam plantão devem possuir documento anexado.');
+        return;
+      }
+
+      const payload = {
+        nome: editingAluno.nome,
+        turma: editingAluno.turma,
+        precisaPlantao: !!editingAluno.precisaPlantao
+      };
+      
+      console.log("EDITING ALUNO:", editingAluno);
+      console.log("PAYLOAD UPDATE:", payload);
+
+      await updateAluno(editingAluno.id, payload);
+
+    
+      if (editingFile) {
+        await uploadDocumento(editingAluno.id, editingFile);
+      }
+
       setShowEdit(false);
       setEditingAluno(null);
+      setEditingFile(null);
       await refreshAlunos();
     } catch (err) {
      
@@ -527,6 +550,24 @@ let qrSize = 34; // QR inside card
                       <label>Turma</label>
                       <input value={editingAluno.turma} onChange={(e) => setEditingAluno({ ...editingAluno, turma: e.target.value })} />
                     </div>
+                    <div className="field field--full">
+                      <label>Precisa de Plantão?</label>
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                        <label>
+                          <input type="radio" name="edit-precisa-plantao" value="false" checked={!editingAluno.precisaPlantao} onChange={() => setEditingAluno({ ...editingAluno, precisaPlantao: false })} /> Não
+                        </label>
+                        <label>
+                          <input type="radio" name="edit-precisa-plantao" value="true" checked={editingAluno.precisaPlantao} onChange={() => setEditingAluno({ ...editingAluno, precisaPlantao: true })} /> Sim
+                        </label>
+                      </div>
+                    </div>
+                    {editingAluno.precisaPlantao && (
+                      <div className="field">
+                        <label>Documento (JPG/PNG, até 5MB)</label>
+                        <input type="file" accept="image/png, image/jpeg" onChange={(e) => setEditingFile(e.target.files[0])} />
+                        {editingAluno.documentoPath && <div style={{ marginTop: '8px', fontSize: '12px' }}>Documento existente: {editingAluno.documentoPath}</div>}
+                      </div>
+                    )}
                   </div>
 
                   <div className="actions-row" style={{ marginTop: '12px' }}>

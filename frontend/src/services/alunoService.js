@@ -19,3 +19,12 @@ export async function deleteAluno(id) {
   const response = await api.delete(`/criancas/${id}`);
   return unwrapResponse(response);
 }
+
+export async function uploadDocumento(id, arquivo) {
+  const form = new FormData();
+  form.append('arquivo', arquivo);
+
+  const response = await api.post(`/criancas/${id}/documento`, form);
+
+  return unwrapResponse(response);
+}

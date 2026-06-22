@@ -3,7 +3,7 @@ import { useState } from 'react';
 import Header from '../../components/Header.jsx';
 import Navbar from '../../components/Navbar.jsx';
 import Sidebar from '../../components/Sidebar.jsx';
-import { createAluno } from '../../services/alunoService.js';
+import { createAluno, uploadDocumento } from '../../services/alunoService.js';
 import { createResponsavel } from '../../services/responsavelService.js';
 import { createVinculo } from '../../services/vinculoService.js';
 
@@ -30,9 +30,7 @@ function extrairMensagemErroBackend(err) {
     }
   }
 
-  if (mensagem) {
-    return mensagem;
-  }
+  if (mensagem) return mensagem;
 
   return err?.message || 'Não foi possível cadastrar o aluno. Verifique a API e tente novamente.';
 }
@@ -43,6 +41,8 @@ export default function CadastroAluno() {
   const [responsaveis, setResponsaveis] = useState([createResponsavelForm()]);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [precisaPlantao, setPrecisaPlantao] = useState(false);
+  const [arquivoDocumento, setArquivoDocumento] = useState(null);
 
   const addResponsavel = () => {
     setResponsaveis((current) => [...current, createResponsavelForm()]);
@@ -50,10 +50,7 @@ export default function CadastroAluno() {
 
   const removeResponsavel = (index) => {
     setResponsaveis((current) => {
-      if (current.length === 1) {
-        return current;
-      }
-
+      if (current.length === 1) return current;
       return current.filter((_, itemIndex) => itemIndex !== index);
     });
   };
@@ -74,8 +71,12 @@ export default function CadastroAluno() {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
+    setError('');
+    setMessage('');
+
     const nomeLimpo = nome.trim();
     const turmaLimpa = turma.trim();
+
     const responsaveisLimpos = responsaveis.map((responsavel) => ({
       nome: responsavel.nome.trim(),
       telefone: responsavel.telefone.trim(),
@@ -84,13 +85,11 @@ export default function CadastroAluno() {
 
     if (!nomeLimpo || !turmaLimpa) {
       setError('Informe o nome do aluno e a turma para continuar.');
-      setMessage('');
       return;
     }
 
     if (responsaveisLimpos.length === 0) {
       setError('Adicione ao menos um responsável.');
-      setMessage('');
       return;
     }
 
@@ -100,12 +99,27 @@ export default function CadastroAluno() {
 
     if (responsavelInvalido) {
       setError('Informe os dados do aluno e do responsável para continuar.');
-      setMessage('');
+      return;
+    }
+
+    if (precisaPlantao && !arquivoDocumento) {
+      setError('Para alunos que precisam de plantão, é obrigatório anexar documento.');
       return;
     }
 
     try {
-      const novoAluno = await createAluno({ nome: nomeLimpo, turma: turmaLimpa });
+      // cria a criança SEM plantão primeiro
+      // porque o backend valida documento quando precisaPlantao = true
+      const novoAluno = await createAluno({
+        nome: nomeLimpo,
+        turma: turmaLimpa,
+        precisaPlantao: false,
+      });
+
+      // se marcou plantão, apenas sobe o documento
+      if (precisaPlantao) {
+        await uploadDocumento(novoAluno.id, arquivoDocumento);
+      }
 
       const responsaveisCriados = await Promise.all(
         responsaveisLimpos.map(async (responsavel) => {
@@ -124,14 +138,19 @@ export default function CadastroAluno() {
         })
       );
 
-      setMessage(`Aluno cadastrado com sucesso com ${responsaveisCriados.length} responsável(eis) vinculado(s).`);
-      setError('');
+      setMessage(
+        `Aluno cadastrado com sucesso com ${responsaveisCriados.length} responsável(eis) vinculado(s).`
+      );
+
       setNome('');
       setTurma('');
       setResponsaveis([createResponsavelForm()]);
+      setPrecisaPlantao(false);
+      setArquivoDocumento(null);
     } catch (err) {
+      console.error('ERRO COMPLETO:', err);
+      console.error('RESPOSTA BACKEND:', err?.response?.data);
       setError(extrairMensagemErroBackend(err));
-      setMessage('');
     }
   };
 
@@ -173,6 +192,42 @@ export default function CadastroAluno() {
                     required
                   />
                 </div>
+
+                <div className="field field--full">
+                  <label>Precisa de Plantão?</label>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                    <label>
+                      <input
+                        type="radio"
+                        name="precisaPlantao"
+                        checked={!precisaPlantao}
+                        onChange={() => setPrecisaPlantao(false)}
+                      />{' '}
+                      Não
+                    </label>
+
+                    <label>
+                      <input
+                        type="radio"
+                        name="precisaPlantao"
+                        checked={precisaPlantao}
+                        onChange={() => setPrecisaPlantao(true)}
+                      />{' '}
+                      Sim
+                    </label>
+                  </div>
+                </div>
+
+                {precisaPlantao && (
+                  <div className="field field--full">
+                    <label>Documento (JPG/PNG, até 5MB)</label>
+                    <input
+                      type="file"
+                      accept="image/png, image/jpeg"
+                      onChange={(e) => setArquivoDocumento(e.target.files?.[0] || null)}
+                    />
+                  </div>
+                )}
               </div>
 
               <section style={{ marginTop: '24px' }}>
@@ -204,29 +259,39 @@ export default function CadastroAluno() {
                           <input
                             id={`responsavel-nome-${index}`}
                             value={responsavel.nome}
-                            onChange={(event) => updateResponsavel(index, 'nome', event.target.value)}
+                            onChange={(event) =>
+                              updateResponsavel(index, 'nome', event.target.value)
+                            }
                             placeholder="Nome completo"
                             required
                           />
                         </div>
 
                         <div className="field">
-                          <label htmlFor={`responsavel-telefone-${index}`}>Telefone do responsável</label>
+                          <label htmlFor={`responsavel-telefone-${index}`}>
+                            Telefone do responsável
+                          </label>
                           <input
                             id={`responsavel-telefone-${index}`}
                             value={responsavel.telefone}
-                            onChange={(event) => updateResponsavel(index, 'telefone', event.target.value)}
+                            onChange={(event) =>
+                              updateResponsavel(index, 'telefone', event.target.value)
+                            }
                             placeholder="Ex.: (47) 99999-9999"
                             required
                           />
                         </div>
 
                         <div className="field field--full">
-                          <label htmlFor={`responsavel-relacao-${index}`}>Relação com a criança</label>
+                          <label htmlFor={`responsavel-relacao-${index}`}>
+                            Relação com a criança
+                          </label>
                           <select
                             id={`responsavel-relacao-${index}`}
                             value={responsavel.relacao}
-                            onChange={(event) => updateResponsavel(index, 'relacao', event.target.value)}
+                            onChange={(event) =>
+                              updateResponsavel(index, 'relacao', event.target.value)
+                            }
                           >
                             {relacaoOptions.map((option) => (
                               <option key={option} value={option}>

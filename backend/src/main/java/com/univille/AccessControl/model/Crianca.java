@@ -2,6 +2,7 @@ package com.univille.AccessControl.model;
 
 import java.time.LocalDateTime;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -29,4 +30,6 @@ public class Crianca {
 
     private String documentoPath;
     private LocalDateTime documentoAtualizadoEm;
+    @Column(name = "precisa_plantao", nullable = false)
+    private boolean precisaPlantao = false;
 }
