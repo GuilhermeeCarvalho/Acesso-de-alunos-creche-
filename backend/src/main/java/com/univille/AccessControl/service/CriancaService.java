@@ -228,10 +228,16 @@ public class CriancaService {
         HttpClient client = HttpClient.newHttpClient();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-        if (response.statusCode() >= 400) {
-            throw new RuntimeException(
-                    "Falha ao excluir documento do Supabase Storage: " + response.body());
-        }
+        if (response.statusCode() == 404) {
+            System.out.println(
+            "Documento não encontrado no Supabase. Prosseguindo com exclusão da criança.");
+        return;
+    }
+
+    if (response.statusCode() >= 400) {
+        throw new RuntimeException(
+            "Falha ao excluir documento do Supabase Storage: " + response.body());
+    }
 
     } catch (IOException ex) {
         throw new RuntimeException("Falha ao excluir documento do Supabase Storage.", ex);

@@ -630,13 +630,23 @@ let qrSize = 34; // QR inside card
                     </div>
                     <div className="field field--full">
                       <label>Precisa de Plantão?</label>
-                      <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                        <label>
-                          <input type="radio" name="edit-precisa-plantao" value="false" checked={!editingAluno.precisaPlantao} onChange={() => setEditingAluno({ ...editingAluno, precisaPlantao: false })} /> Não
-                        </label>
-                        <label>
-                          <input type="radio" name="edit-precisa-plantao" value="true" checked={editingAluno.precisaPlantao} onChange={() => setEditingAluno({ ...editingAluno, precisaPlantao: true })} /> Sim
-                        </label>
+                      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          className={editingAluno.precisaPlantao ? 'button button--secondary' : 'button'}
+                          style={{ minHeight: '40px', padding: '0 16px' }}
+                          onClick={() => setEditingAluno({ ...editingAluno, precisaPlantao: true })}
+                        >
+                          Sim
+                        </button>
+                        <button
+                          type="button"
+                          className={!editingAluno.precisaPlantao ? 'button button--secondary' : 'button'}
+                          style={{ minHeight: '40px', padding: '0 16px' }}
+                          onClick={() => setEditingAluno({ ...editingAluno, precisaPlantao: false })}
+                        >
+                          Não
+                        </button>
                       </div>
                     </div>
                     {editingAluno.precisaPlantao && (

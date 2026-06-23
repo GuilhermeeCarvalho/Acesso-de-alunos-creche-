@@ -195,26 +195,23 @@ export default function CadastroAluno() {
 
                 <div className="field field--full">
                   <label>Precisa de Plantão?</label>
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <label>
-                      <input
-                        type="radio"
-                        name="precisaPlantao"
-                        checked={!precisaPlantao}
-                        onChange={() => setPrecisaPlantao(false)}
-                      />{' '}
-                      Não
-                    </label>
-
-                    <label>
-                      <input
-                        type="radio"
-                        name="precisaPlantao"
-                        checked={precisaPlantao}
-                        onChange={() => setPrecisaPlantao(true)}
-                      />{' '}
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className={precisaPlantao ? 'button button--secondary' : 'button'}
+                      style={{ minHeight: '40px', padding: '0 16px' }}
+                      onClick={() => setPrecisaPlantao(true)}
+                    >
                       Sim
-                    </label>
+                    </button>
+                    <button
+                      type="button"
+                      className={!precisaPlantao ? 'button button--secondary' : 'button'}
+                      style={{ minHeight: '40px', padding: '0 16px' }}
+                      onClick={() => setPrecisaPlantao(false)}
+                    >
+                      Não
+                    </button>
                   </div>
                 </div>
 
