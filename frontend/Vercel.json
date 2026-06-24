@@ -1,8 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/(.*)",
-      "destination": "/"
+      "source": "/((?!auth|criancas|responsaveis|vinculos|alunos|funcionarios|registro|registros).*)",
+      "destination": "/index.html"
     }
   ]
 }
