@@ -57,4 +57,18 @@ public class ResponsavelCriancaController {
                 service.listarResponsaveisDaCrianca(id)
         );
     }
+
+    @Operation(summary = "Remover vínculo do responsável", description = "Remove a associação entre um responsável e uma criança.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Vínculo removido com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Vínculo ou criança não encontrado")
+    })
+    @DeleteMapping("/crianca/{criancaId}/responsavel/{responsavelId}")
+    public ResponseEntity<?> removerVinculo(
+            @Parameter(description = "ID da criança") @PathVariable Long criancaId,
+            @Parameter(description = "ID do responsável") @PathVariable Long responsavelId
+    ) {
+        service.removerVinculo(criancaId, responsavelId);
+        return ResponseEntity.ok().build();
+    }
 }

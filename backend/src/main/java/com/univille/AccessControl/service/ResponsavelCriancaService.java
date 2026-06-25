@@ -72,4 +72,8 @@ public class ResponsavelCriancaService {
                 ))
                 .toList();
     }
+
+    public void removerVinculo(Long criancaId, Long responsavelId) {
+        repository.deleteByCriancaIdAndResponsavelId(criancaId, responsavelId);
+    }
 }
