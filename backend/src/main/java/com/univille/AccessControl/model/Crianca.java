@@ -32,4 +32,6 @@ public class Crianca {
     private LocalDateTime documentoAtualizadoEm;
     @Column(name = "precisa_plantao", nullable = false)
     private boolean precisaPlantao = false;
+
+    private String turno;
 }

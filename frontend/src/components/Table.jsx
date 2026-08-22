@@ -1,4 +1,4 @@
-export default function Table({ columns = [], rows = [], emptyMessage = 'Nenhum registro encontrado.' }) {
+export default function Table({ columns = [], rows = [], emptyMessage = 'Nenhum registro encontrado.', getRowStyle }) {
   if (!rows.length) {
     return <div className="empty-state">{emptyMessage}</div>;
   }
@@ -15,7 +15,7 @@ export default function Table({ columns = [], rows = [], emptyMessage = 'Nenhum 
         </thead>
         <tbody>
           {rows.map((row, index) => (
-            <tr key={row.id ?? index}>
+            <tr key={row.id ?? index} style={typeof getRowStyle === 'function' ? getRowStyle(row) : undefined}>
               {columns.map((column) => (
                 <td key={column.key}>{typeof column.render === 'function' ? column.render(row) : row[column.key]}</td>
               ))}

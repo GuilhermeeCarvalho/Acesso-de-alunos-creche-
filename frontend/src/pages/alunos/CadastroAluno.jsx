@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Header from '../../components/Header.jsx';
 import Navbar from '../../components/Navbar.jsx';
 import Sidebar from '../../components/Sidebar.jsx';
+import { useAuth } from '../../contexts/AuthContext.jsx';
 import { createAluno, uploadDocumento } from '../../services/alunoService.js';
 import { createResponsavel } from '../../services/responsavelService.js';
 import { createVinculo } from '../../services/vinculoService.js';
@@ -36,12 +37,36 @@ function extrairMensagemErroBackend(err) {
 }
 
 export default function CadastroAluno() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
+
+  const turmaOptions = [
+    'Berçário',
+    'Maternal IA',
+    'Maternal IB',
+    'Maternal IIA',
+    'Maternal IIB',
+    'Maternal IIC',
+    'Maternal IID',
+    'Maternal IIE',
+    'Maternal IIF',
+    'PRÉ IA',
+    'PRÉ IB',
+    'PRÉ IC',
+    'PRÉ IIA',
+    'PRÉ IIB',
+    'PRÉ IIC'
+  ];
+
+  const [creatingTurma, setCreatingTurma] = useState(false);
+  const [novaTurma, setNovaTurma] = useState('');
   const [nome, setNome] = useState('');
   const [turma, setTurma] = useState('');
   const [responsaveis, setResponsaveis] = useState([createResponsavelForm()]);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [precisaPlantao, setPrecisaPlantao] = useState(false);
+  const [turno, setTurno] = useState('');
   const [arquivoDocumento, setArquivoDocumento] = useState(null);
 
   const addResponsavel = () => {
@@ -75,7 +100,7 @@ export default function CadastroAluno() {
     setMessage('');
 
     const nomeLimpo = nome.trim();
-    const turmaLimpa = turma.trim();
+    const turmaFinal = creatingTurma ? novaTurma.trim() : turma.trim();
 
     const responsaveisLimpos = responsaveis.map((responsavel) => ({
       nome: responsavel.nome.trim(),
@@ -83,7 +108,7 @@ export default function CadastroAluno() {
       relacao: responsavel.relacao,
     }));
 
-    if (!nomeLimpo || !turmaLimpa) {
+    if (!nomeLimpo || !turmaFinal) {
       setError('Informe o nome do aluno e a turma para continuar.');
       return;
     }
@@ -112,8 +137,9 @@ export default function CadastroAluno() {
       // porque o backend valida documento quando precisaPlantao = true
       const novoAluno = await createAluno({
         nome: nomeLimpo,
-        turma: turmaLimpa,
+        turma: turmaFinal,
         precisaPlantao: false,
+        turno: turno.trim() || null,
       });
 
       // se marcou plantão, apenas sobe o documento
@@ -144,8 +170,11 @@ export default function CadastroAluno() {
 
       setNome('');
       setTurma('');
+      setNovaTurma('');
+      setCreatingTurma(false);
       setResponsaveis([createResponsavelForm()]);
       setPrecisaPlantao(false);
+      setTurno('');
       setArquivoDocumento(null);
     } catch (err) {
       console.error('ERRO COMPLETO:', err);
@@ -184,13 +213,53 @@ export default function CadastroAluno() {
 
                 <div className="field">
                   <label htmlFor="aluno-turma">Turma</label>
-                  <input
+                  <select
                     id="aluno-turma"
-                    value={turma}
-                    onChange={(event) => setTurma(event.target.value)}
-                    placeholder="Ex.: Jardim II"
+                    value={creatingTurma ? '__create_new' : turma}
+                    onChange={(event) => {
+                      const val = event.target.value;
+                      if (val === '__create_new') {
+                        setCreatingTurma(true);
+                        setTurma('');
+                      } else {
+                        setCreatingTurma(false);
+                        setTurma(val);
+                      }
+                    }}
                     required
-                  />
+                  >
+                    <option value="">Selecione a turma</option>
+                    {turmaOptions.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                    {isAdmin && <option value="__create_new">Criar nova turma</option>}
+                  </select>
+
+                  {creatingTurma && isAdmin && (
+                    <input
+                      id="aluno-nova-turma"
+                      value={novaTurma}
+                      onChange={(event) => setNovaTurma(event.target.value)}
+                      placeholder="Nome da nova turma"
+                      required
+                      style={{ marginTop: '8px' }}
+                    />
+                  )}
+                </div>
+
+                <div className="field">
+                  <label htmlFor="aluno-turno">Turno</label>
+                  <select
+                    id="aluno-turno"
+                    value={turno}
+                    onChange={(event) => setTurno(event.target.value)}
+                  >
+                    <option value="">Selecione o turno</option>
+                    <option value="Vespertino">Vespertino</option>
+                    <option value="Matutino">Matutino</option>
+                  </select>
                 </div>
 
                 <div className="field field--full">

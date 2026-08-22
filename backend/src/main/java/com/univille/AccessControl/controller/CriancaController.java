@@ -92,6 +92,16 @@ public class CriancaController {
         return ResponseEntity.ok(dadosDocumento);
     }
 
+    @Operation(summary = "Excluir documento da criança", description = "Remove o documento de plantão da criança e limpa os metadados associados.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Documento removido com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Criança não encontrada")
+    })
+    @DeleteMapping("/{id}/documento")
+    public ResponseEntity<Crianca> removerDocumento(@PathVariable Long id) {
+        return ResponseEntity.ok(service.removerDocumento(id));
+    }
+
     @Operation(summary = "Excluir criança", description = "Remove uma criança do sistema.")
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "Criança removida com sucesso"),

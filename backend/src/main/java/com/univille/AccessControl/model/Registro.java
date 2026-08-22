@@ -42,6 +42,8 @@ public class Registro {
     @Enumerated(EnumType.STRING)
     private TipoRegistro tipo;
 
+    private String observacao;
+
     private LocalDateTime dataHora;
 
     @PrePersist

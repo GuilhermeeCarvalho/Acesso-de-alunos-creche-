@@ -83,6 +83,28 @@ public class CriancaService {
         return dados;
     }
 
+    public Crianca removerDocumento(Long id) {
+        Crianca crianca = criancaRepository.findById(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Criança não encontrada"));
+
+        String documentoPath = crianca.getDocumentoPath();
+        if (documentoPath != null && !documentoPath.isBlank()) {
+            String bucket = getOptionalEnvVar("SUPABASE_BUCKET");
+            String supabaseUrl = getOptionalEnvVar("SUPABASE_URL");
+            String serviceKey = getOptionalEnvVar("SUPABASE_SERVICE_KEY");
+
+            if (bucket != null && supabaseUrl != null && serviceKey != null) {
+                excluirDocumentoAnterior(bucket, supabaseUrl, serviceKey, documentoPath);
+            }
+        }
+
+        crianca.setDocumentoPath(null);
+        crianca.setDocumentoAtualizadoEm(null);
+        crianca.setPrecisaPlantao(false);
+
+        return criancaRepository.save(crianca);
+    }
+
     private String gerarSignedUrl(String documentoPath) {
         String bucket = getEnvVar("SUPABASE_BUCKET");
         String supabaseUrl = getEnvVar("SUPABASE_URL");
@@ -255,6 +277,11 @@ public class CriancaService {
         return value;
     }
 
+    private String getOptionalEnvVar(String name) {
+        String value = System.getenv(name);
+        return (value == null || value.isBlank()) ? null : value;
+    }
+
     public List<Crianca> listarTodos() {
         return criancaRepository.findAll();
     }
@@ -269,6 +296,10 @@ public class CriancaService {
 
     if (dadosAtualizados.getTurma() != null && !dadosAtualizados.getTurma().isBlank()) {
         crianca.setTurma(dadosAtualizados.getTurma());
+    }
+
+    if (dadosAtualizados.getTurno() != null) {
+        crianca.setTurno(dadosAtualizados.getTurno().isBlank() ? null : dadosAtualizados.getTurno());
     }
 
     crianca.setPrecisaPlantao(dadosAtualizados.isPrecisaPlantao());

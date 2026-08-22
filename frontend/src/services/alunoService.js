@@ -33,3 +33,8 @@ export async function uploadDocumento(id, arquivo) {
 
   return unwrapResponse(response);
 }
+
+export async function deleteDocumento(id) {
+  const response = await api.delete(`/criancas/${id}/documento`);
+  return unwrapResponse(response);
+}

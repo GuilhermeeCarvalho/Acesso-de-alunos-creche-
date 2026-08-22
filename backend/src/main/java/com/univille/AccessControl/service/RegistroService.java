@@ -1,15 +1,23 @@
 package com.univille.AccessControl.service;
 
+import java.util.List;
+
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Service;
+
 import com.univille.AccessControl.dto.RegistroRequest;
 import com.univille.AccessControl.exception.RecursoNaoEncontradoException;
 import com.univille.AccessControl.exception.RegraNegocioException;
-import com.univille.AccessControl.model.*;
-import com.univille.AccessControl.repository.*;
-import org.springframework.stereotype.Service;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-
-import java.util.List;
+import com.univille.AccessControl.model.Crianca;
+import com.univille.AccessControl.model.Funcionario;
+import com.univille.AccessControl.model.Registro;
+import com.univille.AccessControl.model.Responsavel;
+import com.univille.AccessControl.model.TipoRegistro;
+import com.univille.AccessControl.repository.CriancaRepository;
+import com.univille.AccessControl.repository.FuncionarioRepository;
+import com.univille.AccessControl.repository.RegistroRepository;
+import com.univille.AccessControl.repository.ResponsavelRepository;
 
 @Service
 public class RegistroService {
@@ -78,6 +86,7 @@ public class RegistroService {
         registro.setResponsavel(responsavel);
         registro.setFuncionario(funcionario);
         registro.setTipo(tipo);
+        registro.setObservacao(request.getObservacao());
 
         return registroRepository.save(registro);
     }

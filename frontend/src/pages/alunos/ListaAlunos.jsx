@@ -5,7 +5,7 @@ import { jsPDF } from 'jspdf';
 import Header from '../../components/Header.jsx';
 import Navbar from '../../components/Navbar.jsx';
 import Sidebar from '../../components/Sidebar.jsx';
-import { listAlunos, updateAluno, deleteAluno, uploadDocumento, getDocumento } from '../../services/alunoService.js';
+import { listAlunos, updateAluno, deleteAluno, uploadDocumento, getDocumento, deleteDocumento } from '../../services/alunoService.js';
 import { listResponsaveisDaCrianca, createResponsavel, updateResponsavel, deleteResponsavel, deleteVinculo } from '../../services/responsavelService.js';
 import { createVinculo } from '../../services/vinculoService.js';
 
@@ -54,6 +54,7 @@ export default function ListaAlunos() {
   const [documentoModalUrl, setDocumentoModalUrl] = useState('');
   const [documentoModalNome, setDocumentoModalNome] = useState('');
   const [documentoModalPath, setDocumentoModalPath] = useState('');
+  const [documentoModalAlunoId, setDocumentoModalAlunoId] = useState(null);
   const [documentoModalLoading, setDocumentoModalLoading] = useState(false);
   const [newResponsavel, setNewResponsavel] = useState({ nome: '', telefone: '', relacao: 'RESPONSAVEL_LEGAL' });
   const [selectedAlunoId, setSelectedAlunoId] = useState(null);
@@ -205,7 +206,14 @@ let qrSize = 34; // QR inside card
   }
 
   function handleStartEdit(aluno) {
-    setEditingAluno({ id: aluno.id, nome: aluno.nome || '', turma: aluno.turma || '', precisaPlantao: aluno.precisaPlantao || false, documentoPath: aluno.documentoPath || '' });
+    setEditingAluno({
+      id: aluno.id,
+      nome: aluno.nome || '',
+      turma: aluno.turma || '',
+      turno: aluno.turno || '',
+      precisaPlantao: aluno.precisaPlantao || false,
+      documentoPath: aluno.documentoPath || ''
+    });
     setShowEdit(true);
   }
 
@@ -219,6 +227,7 @@ let qrSize = 34; // QR inside card
 
       setDocumentoModalNome(aluno.nome || 'Documento');
       setDocumentoModalPath(documento.documentoPath || '');
+      setDocumentoModalAlunoId(aluno.id);
       setDocumentoModalUrl(documento.signedUrl);
       setDocumentoModalOpen(true);
     } catch (err) {
@@ -235,6 +244,26 @@ let qrSize = 34; // QR inside card
     setDocumentoModalUrl('');
     setDocumentoModalPath('');
     setDocumentoModalNome('');
+    setDocumentoModalAlunoId(null);
+  }
+
+  async function handleRemoveDocumento(alunoId, options = {}) {
+    if (!window.confirm('Deseja remover o documento de plantão desta criança?')) return;
+
+    try {
+      await deleteDocumento(alunoId);
+
+      if (options.closeModal) {
+        handleCloseDocumentoModal();
+      }
+
+      setEditingAluno((prev) => (prev && prev.id === alunoId ? { ...prev, documentoPath: '', precisaPlantao: false } : prev));
+      await refreshAlunos();
+      alert('Documento removido com sucesso.');
+    } catch (err) {
+      console.error(err);
+      alert('Não foi possível remover o documento. Verifique a API.');
+    }
   }
 
   async function handleSaveEdit() {
@@ -248,6 +277,7 @@ let qrSize = 34; // QR inside card
       const payload = {
         nome: editingAluno.nome,
         turma: editingAluno.turma,
+        turno: editingAluno.turno?.trim() ? editingAluno.turno.trim() : null,
         precisaPlantao: !!editingAluno.precisaPlantao
       };
       
@@ -511,14 +541,23 @@ let qrSize = 34; // QR inside card
                                 Gerar QR
                               </button>
                               {aluno.documentoPath && (
-                                <button
-                                  type="button"
-                                  className="button button--secondary button--small"
-                                  onClick={() => handleViewDocumento(aluno)}
-                                  disabled={documentoModalLoading}
-                                >
-                                  Visualizar documento
-                                </button>
+                                <>
+                                  <button
+                                    type="button"
+                                    className="button button--secondary button--small"
+                                    onClick={() => handleViewDocumento(aluno)}
+                                    disabled={documentoModalLoading}
+                                  >
+                                    Visualizar documento
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="button button--danger button--small"
+                                    onClick={() => handleRemoveDocumento(aluno.id)}
+                                  >
+                                    Remover documento
+                                  </button>
+                                </>
                               )}
                             </div>
                           </td>
@@ -587,9 +626,16 @@ let qrSize = 34; // QR inside card
                       <h3 style={{ margin: 0 }}>Documento de {documentoModalNome}</h3>
                       <p style={{ margin: '6px 0 0', color: '#5f6c85', fontSize: '0.95rem' }}>{documentoModalPath}</p>
                     </div>
-                    <button type="button" className="button button--secondary button--small" onClick={handleCloseDocumentoModal}>
-                      Fechar
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      {documentoModalAlunoId && (
+                        <button type="button" className="button button--danger button--small" onClick={() => handleRemoveDocumento(documentoModalAlunoId, { closeModal: true })}>
+                          Remover documento
+                        </button>
+                      )}
+                      <button type="button" className="button button--secondary button--small" onClick={handleCloseDocumentoModal}>
+                        Fechar
+                      </button>
+                    </div>
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'center', minHeight: '240px', background: '#f8fafc', borderRadius: '8px', overflow: 'hidden' }}>
@@ -628,6 +674,15 @@ let qrSize = 34; // QR inside card
                       <label>Turma</label>
                       <input value={editingAluno.turma} onChange={(e) => setEditingAluno({ ...editingAluno, turma: e.target.value })} />
                     </div>
+
+                    <div className="field">
+                      <label>Turno</label>
+                      <select value={editingAluno.turno || ''} onChange={(e) => setEditingAluno({ ...editingAluno, turno: e.target.value })}>
+                        <option value="">Selecione o turno</option>
+                        <option value="Vespertino">Vespertino</option>
+                        <option value="Matutino">Matutino</option>
+                      </select>
+                    </div>
                     <div className="field field--full">
                       <label>Precisa de Plantão?</label>
                       <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
@@ -653,7 +708,14 @@ let qrSize = 34; // QR inside card
                       <div className="field">
                         <label>Documento (JPG até 5MB)</label>
                         <input type="file" accept="image/jpeg" onChange={(e) => setEditingFile(e.target.files[0])} />
-                        {editingAluno.documentoPath && <div style={{ marginTop: '8px', fontSize: '12px' }}>Documento existente: {editingAluno.documentoPath}</div>}
+                        {editingAluno.documentoPath && (
+                          <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            <div style={{ fontSize: '12px' }}>Documento existente: {editingAluno.documentoPath}</div>
+                            <button type="button" className="button button--danger button--small" onClick={() => handleRemoveDocumento(editingAluno.id)}>
+                              Remover documento atual
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

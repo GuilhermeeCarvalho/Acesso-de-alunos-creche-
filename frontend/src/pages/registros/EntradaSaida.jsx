@@ -49,6 +49,7 @@ export default function EntradaSaida() {
   const [criancaId, setCriancaId] = useState('');
   const [responsavelId, setResponsavelId] = useState('');
   const [tipo, setTipo] = useState('entrada');
+  const [observacao, setObservacao] = useState('');
   const [loadingAlunos, setLoadingAlunos] = useState(true);
   const [loadingResponsaveis, setLoadingResponsaveis] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
@@ -280,6 +281,7 @@ export default function EntradaSaida() {
       const registro = await registrarMovimentacao(tipo, {
         criancaId: criancaSelecionadaId,
         responsavelId: responsavelSelecionadoId,
+        observacao: observacao.trim(),
       });
 
       const dataHoraRegistro = registro?.dataHora ? formatarDataHora(new Date(registro.dataHora)) : formatarDataHora(new Date());
@@ -289,6 +291,7 @@ export default function EntradaSaida() {
       setCriancaId('');
       setResponsavelId('');
       setTipo('entrada');
+      setObservacao('');
     } catch (error) {
       setError(extrairMensagemErro(error));
       setMessage('');
@@ -400,6 +403,18 @@ export default function EntradaSaida() {
                     <option value="entrada">Entrada</option>
                     <option value="saida">Saída</option>
                   </select>
+                </div>
+
+                <div className="field field--full">
+                  <label htmlFor="registro-observacao">Observação</label>
+                  <textarea
+                    id="registro-observacao"
+                    value={observacao}
+                    onChange={(event) => setObservacao(event.target.value)}
+                    placeholder="Ex.: aluno chegou acompanhado, houve atraso, retorno após atendimento..."
+                    rows={3}
+                    style={{ resize: 'vertical' }}
+                  />
                 </div>
               </div>
 
