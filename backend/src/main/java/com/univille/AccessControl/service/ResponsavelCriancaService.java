@@ -2,6 +2,7 @@ package com.univille.AccessControl.service;
 
 import com.univille.AccessControl.dto.ResponsavelCriancaResponse;
 import com.univille.AccessControl.dto.VinculoResponsavelRequest;
+import com.univille.AccessControl.exception.RegraNegocioException;
 import com.univille.AccessControl.model.Crianca;
 import com.univille.AccessControl.model.Responsavel;
 import com.univille.AccessControl.model.ResponsavelCrianca;
@@ -53,6 +54,20 @@ public class ResponsavelCriancaService {
 
         repository.save(vinculo);
     }
+
+    public void atualizarRelacao(Long criancaId, Long responsavelId, String relacao) {
+        criancaRepository.findById(criancaId)
+                .orElseThrow(() -> new IllegalArgumentException("Criança não encontrada"));
+
+        responsavelRepository.findById(responsavelId)
+                .orElseThrow(() -> new IllegalArgumentException("Responsável não encontrado"));
+
+        repository.updateRelacaoByCriancaIdAndResponsavelId(
+                criancaId,
+                responsavelId,
+                TipoRelacao.valueOf(relacao)
+        );
+    }
     public List<ResponsavelCriancaResponse>
     listarResponsaveisDaCrianca(Long criancaId) {
 
@@ -74,6 +89,14 @@ public class ResponsavelCriancaService {
     }
 
     public void removerVinculo(Long criancaId, Long responsavelId) {
+        List<ResponsavelCrianca> vinculos = repository.findByCriancaId(criancaId);
+
+        if (vinculos.size() <= 1) {
+            throw new RegraNegocioException(
+                    "Não é possível remover este responsável porque a criança precisa ter pelo menos um responsável vinculado para continuar."
+            );
+        }
+
         repository.deleteByCriancaIdAndResponsavelId(criancaId, responsavelId);
     }
 }

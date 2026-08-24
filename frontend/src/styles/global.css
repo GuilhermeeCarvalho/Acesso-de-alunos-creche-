@@ -531,6 +531,13 @@ button {
   border-radius: var(--radius-md);
   background: rgba(31, 122, 112, 0.1);
   color: var(--accent-strong);
+  border: 1px solid rgba(31, 122, 112, 0.16);
+}
+
+.notice--error {
+  background: rgba(176, 58, 58, 0.08);
+  border-color: rgba(176, 58, 58, 0.18);
+  color: #7d1f1f;
 }
 
 @media (max-width: 1080px) {

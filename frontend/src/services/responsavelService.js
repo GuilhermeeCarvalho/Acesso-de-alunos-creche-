@@ -25,6 +25,11 @@ export async function deleteResponsavel(responsavelId) {
   return unwrapResponse(response);
 }
 
+export async function updateVinculoRelacao(criancaId, responsavelId, relacao) {
+  const response = await api.put(`/vinculos/crianca/${criancaId}/responsavel/${responsavelId}/relacao`, { relacao });
+  return unwrapResponse(response);
+}
+
 export async function deleteVinculo(criancaId, responsavelId) {
   const response = await api.delete(`/vinculos/crianca/${criancaId}/responsavel/${responsavelId}`);
   return unwrapResponse(response);

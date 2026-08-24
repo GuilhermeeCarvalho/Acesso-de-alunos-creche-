@@ -7,6 +7,7 @@ import { useAuth } from '../../contexts/AuthContext.jsx';
 import { createAluno, uploadDocumento } from '../../services/alunoService.js';
 import { createResponsavel } from '../../services/responsavelService.js';
 import { createVinculo } from '../../services/vinculoService.js';
+import { formatApiError } from '../../utils/errorFormatter.js';
 
 const relacaoOptions = ['PAI', 'MAE', 'IRMAO', 'TIO', 'AVO', 'RESPONSAVEL_LEGAL'];
 
@@ -15,26 +16,6 @@ const createResponsavelForm = () => ({
   telefone: '',
   relacao: 'RESPONSAVEL_LEGAL',
 });
-
-function extrairMensagemErroBackend(err) {
-  const data = err?.response?.data;
-  const mensagem = data?.mensagem || data?.message || data?.error;
-  const erros = data?.erros;
-
-  if (erros && typeof erros === 'object') {
-    const mensagens = Object.entries(erros)
-      .map(([campo, valor]) => `${campo}: ${valor}`)
-      .filter(Boolean);
-
-    if (mensagens.length > 0) {
-      return mensagens.join(' | ');
-    }
-  }
-
-  if (mensagem) return mensagem;
-
-  return err?.message || 'Não foi possível cadastrar o aluno. Verifique a API e tente novamente.';
-}
 
 export default function CadastroAluno() {
   const { user } = useAuth();
@@ -177,9 +158,7 @@ export default function CadastroAluno() {
       setTurno('');
       setArquivoDocumento(null);
     } catch (err) {
-      console.error('ERRO COMPLETO:', err);
-      console.error('RESPOSTA BACKEND:', err?.response?.data);
-      setError(extrairMensagemErroBackend(err));
+      setError(formatApiError(err, 'Não foi possível cadastrar o aluno. Verifique os dados e tente novamente.'));
     }
   };
 

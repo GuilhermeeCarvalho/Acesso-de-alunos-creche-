@@ -55,4 +55,15 @@ public class RegistroController {
     public ResponseEntity<List<Registro>> listar() {
         return ResponseEntity.ok(service.listarTodos());
     }
+
+    @Operation(summary = "Excluir registro", description = "Remove um registro de entrada ou saída do sistema.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Registro removido com sucesso"),
+            @ApiResponse(responseCode = "404", description = "Registro não encontrado")
+    })
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> excluir(@PathVariable Long id) {
+        service.excluir(id);
+        return ResponseEntity.ok().build();
+    }
 }

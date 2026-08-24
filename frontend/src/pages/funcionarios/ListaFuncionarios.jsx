@@ -4,7 +4,8 @@ import Header from '../../components/Header.jsx';
 import Navbar from '../../components/Navbar.jsx';
 import Sidebar from '../../components/Sidebar.jsx';
 import Table from '../../components/Table.jsx';
-import { deleteFuncionario, listFuncionarios } from '../../services/funcionarioService.js';
+import { deleteFuncionario, listFuncionarios, updateFuncionarioSenha } from '../../services/funcionarioService.js';
+import { formatApiError } from '../../utils/errorFormatter.js';
 
 function TrashIcon() {
   return (
@@ -33,6 +34,11 @@ export default function ListaFuncionarios() {
   const [deleteStep, setDeleteStep] = useState(1);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const [deleteError, setDeleteError] = useState('');
+  const [editingPasswordFuncionario, setEditingPasswordFuncionario] = useState(null);
+  const [novaSenha, setNovaSenha] = useState('');
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
 
   useEffect(() => {
     let isActive = true;
@@ -87,6 +93,50 @@ export default function ListaFuncionarios() {
     setDeleteError('');
   }
 
+  function openPasswordDialog(funcionario) {
+    setEditingPasswordFuncionario(funcionario);
+    setNovaSenha('');
+    setMostrarSenha(false);
+    setPasswordError('');
+    setPasswordSuccess('');
+  }
+
+  function closePasswordDialog() {
+    setEditingPasswordFuncionario(null);
+    setNovaSenha('');
+    setMostrarSenha(false);
+    setPasswordError('');
+    setPasswordSuccess('');
+  }
+
+  async function saveFuncionarioPassword() {
+    if (!editingPasswordFuncionario) {
+      return;
+    }
+
+    const senha = novaSenha.trim();
+
+    if (!senha) {
+      setPasswordError('Informe uma nova senha para continuar.');
+      return;
+    }
+
+    if (senha.length < 6) {
+      setPasswordError('A senha precisa ter pelo menos 6 dígitos.');
+      return;
+    }
+
+    try {
+      await updateFuncionarioSenha(editingPasswordFuncionario.id, senha);
+      setPasswordSuccess('Senha atualizada com sucesso.');
+      setPasswordError('');
+      setTimeout(() => closePasswordDialog(), 1200);
+    } catch (err) {
+      setPasswordError(formatApiError(err, 'Não foi possível atualizar a senha do funcionário.'));
+      setPasswordSuccess('');
+    }
+  }
+
   async function confirmDeleteFuncionario() {
     if (!deletingFuncionario) {
       return;
@@ -110,8 +160,7 @@ export default function ListaFuncionarios() {
       setFuncionarios((current) => current.filter((funcionario) => funcionario.id !== deletingFuncionario.id));
       closeDeleteDialog();
     } catch (err) {
-      const apiMessage = err?.response?.data?.mensagem || err?.response?.data?.message || err?.message;
-      setDeleteError(apiMessage || 'Não foi possível excluir o funcionário. Verifique a API e tente novamente.');
+      setDeleteError(formatApiError(err, 'Não foi possível excluir o funcionário. Verifique os dados e tente novamente.'));
     }
   }
 
@@ -148,28 +197,43 @@ export default function ListaFuncionarios() {
                   key: 'actions',
                   label: 'Ações',
                   render: (funcionario) => (
-                    funcionario.role === 'ADMIN' && quantidadeAdmins === 1 ? (
-                      <button
-                        type="button"
-                        className="button button--secondary button--small"
-                        disabled
-                        title="O único administrador não pode ser excluído"
-                      >
-                        Único admin
-                      </button>
-                    ) : (
-                    <button
-                      type="button"
-                      className="button button--danger button--small"
-                      onClick={() => openDeleteDialog(funcionario)}
-                      title="Excluir funcionário"
-                    >
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                        <TrashIcon />
-                        Excluir
-                      </span>
-                    </button>
-                    )
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      {String(funcionario.email || '').toLowerCase() !== 'admin@creche.com' && (
+                        <button
+                          type="button"
+                          className="button button--secondary button--small"
+                          onClick={() => openPasswordDialog(funcionario)}
+                          title="Alterar senha do funcionário"
+                        >
+                          Alterar senha
+                        </button>
+                      )}
+
+                      {String(funcionario.email || '').toLowerCase() === 'admin@creche.com' ? null : (
+                        funcionario.role === 'ADMIN' && quantidadeAdmins === 1 ? (
+                          <button
+                            type="button"
+                            className="button button--secondary button--small"
+                            disabled
+                            title="O único administrador não pode ser excluído"
+                          >
+                            Único admin
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="button button--danger button--small"
+                            onClick={() => openDeleteDialog(funcionario)}
+                            title="Excluir funcionário"
+                          >
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                              <TrashIcon />
+                              Excluir
+                            </span>
+                          </button>
+                        )
+                      )}
+                    </div>
                   ),
                 },
               ]}
@@ -185,6 +249,83 @@ export default function ListaFuncionarios() {
           </section>
         </main>
       </div>
+
+      {editingPasswordFuncionario && (
+        <div
+          className="modal"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1200,
+          }}
+        >
+          <div
+            className="modal__content"
+            style={{
+              background: '#fff',
+              padding: '20px',
+              borderRadius: '12px',
+              width: '480px',
+              maxWidth: '96%',
+              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.22)',
+            }}
+          >
+            <h3 style={{ marginTop: 0 }}>Alterar senha</h3>
+            <p style={{ marginTop: '8px' }}>
+              Defina uma nova senha para <strong>{editingPasswordFuncionario.nome}</strong>.
+            </p>
+
+            <div className="field" style={{ marginTop: '12px' }}>
+              <label htmlFor="nova-senha-funcionario">Nova senha</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  id="nova-senha-funcionario"
+                  type={mostrarSenha ? 'text' : 'password'}
+                  value={novaSenha}
+                  onChange={(event) => setNovaSenha(event.target.value)}
+                  placeholder="Digite a nova senha"
+                  autoComplete="new-password"
+                  style={{ paddingRight: '48px' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setMostrarSenha((prev) => !prev)}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    border: 'none',
+                    background: 'transparent',
+                    color: '#4c6ef5',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                    fontSize: '12px',
+                  }}
+                >
+                  {mostrarSenha ? 'Ocultar' : 'Ver'}
+                </button>
+              </div>
+            </div>
+
+            {passwordError && <div className="notice notice--error" style={{ marginTop: '12px' }}>{passwordError}</div>}
+            {passwordSuccess && <div className="notice" style={{ marginTop: '12px' }}>{passwordSuccess}</div>}
+
+            <div className="actions-row" style={{ marginTop: '16px', justifyContent: 'flex-end' }}>
+              <button type="button" className="button button--secondary" onClick={closePasswordDialog}>
+                Cancelar
+              </button>
+              <button type="button" className="button" onClick={saveFuncionarioPassword}>
+                Salvar senha
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {deletingFuncionario && (
         <div

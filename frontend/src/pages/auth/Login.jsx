@@ -2,10 +2,12 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../../contexts/AuthContext.jsx';
+import { formatApiError } from '../../utils/errorFormatter.js';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState('');
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -31,8 +33,7 @@ export default function Login() {
       await login(email, password);
       navigate(from === '/' || from === '/login' ? '/home' : from, { replace: true });
     } catch (error) {
-      const msg = error?.response?.data?.mensagem || error?.message || 'Email ou senha inválidos.';
-      setMessage(msg);
+      setMessage(formatApiError(error, 'Email ou senha inválidos. Verifique os dados e tente novamente.'));
     }
   };
 
@@ -56,13 +57,35 @@ export default function Login() {
 
         <div className="field">
           <label htmlFor="login-password">Senha</label>
-          <input
-            id="login-password"
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            placeholder="Digite sua senha"
-          />
+          <div style={{ position: 'relative' }}>
+            <input
+              id="login-password"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              placeholder="Digite sua senha"
+              style={{ paddingRight: '42px' }}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+              style={{
+                position: 'absolute',
+                right: '10px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                border: 'none',
+                background: 'transparent',
+                color: '#4c6ef5',
+                cursor: 'pointer',
+                fontWeight: 700,
+                fontSize: '12px',
+              }}
+            >
+              {showPassword ? 'Ocultar' : 'Ver'}
+            </button>
+          </div>
         </div>
 
         <div className="actions-row">

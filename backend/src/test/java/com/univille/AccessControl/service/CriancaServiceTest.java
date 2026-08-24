@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,7 +14,10 @@ import org.mockito.Mock;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.univille.AccessControl.exception.RegraNegocioException;
 import com.univille.AccessControl.model.Crianca;
+import com.univille.AccessControl.model.Responsavel;
+import com.univille.AccessControl.model.ResponsavelCrianca;
 import com.univille.AccessControl.repository.CriancaRepository;
 import com.univille.AccessControl.repository.RegistroRepository;
 import com.univille.AccessControl.repository.ResponsavelCriancaRepository;
@@ -74,5 +78,28 @@ class CriancaServiceTest {
         assertNull(resultado.getDocumentoPath());
         assertNull(resultado.getDocumentoAtualizadoEm());
         assertTrue(!resultado.isPrecisaPlantao());
+    }
+
+    @Test
+    void deveBloquearRemocaoDoUltimoVinculoDoResponsavel() {
+        ResponsavelCriancaService responsavelCriancaService = new ResponsavelCriancaService(
+                criancaRepository,
+                null,
+                responsavelCriancaRepository
+        );
+
+        Crianca crianca = new Crianca();
+        crianca.setId(10L);
+
+        Responsavel responsavel = new Responsavel();
+        responsavel.setId(20L);
+
+        ResponsavelCrianca vinculo = new ResponsavelCrianca();
+        vinculo.setCrianca(crianca);
+        vinculo.setResponsavel(responsavel);
+
+        when(responsavelCriancaRepository.findByCriancaId(10L)).thenReturn(java.util.List.of(vinculo));
+
+        assertThrows(RegraNegocioException.class, () -> responsavelCriancaService.removerVinculo(10L, 20L));
     }
 }

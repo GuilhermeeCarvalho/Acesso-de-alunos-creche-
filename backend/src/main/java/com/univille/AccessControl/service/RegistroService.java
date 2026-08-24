@@ -41,6 +41,13 @@ public class RegistroService {
         return registroRepository.findAll();
     }
 
+    public void excluir(Long id) {
+        Registro registro = registroRepository.findById(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Registro não encontrado"));
+
+        registroRepository.delete(registro);
+    }
+
     public Registro registrarEntrada(RegistroRequest request) {
         return salvarRegistro(request, TipoRegistro.ENTRADA);
     }

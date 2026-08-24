@@ -8,6 +8,7 @@ import { useAuth } from '../../contexts/AuthContext.jsx';
 import { listAlunos } from '../../services/alunoService.js';
 import { listResponsaveisDaCrianca } from '../../services/responsavelService.js';
 import { registrarMovimentacao } from '../../services/registroService.js';
+import { formatApiError } from '../../utils/errorFormatter.js';
 
 function formatarDataHora(date) {
   return new Intl.DateTimeFormat('pt-BR', {
@@ -239,12 +240,7 @@ export default function EntradaSaida() {
   }, [scannerOpen, alunos]);
 
   const extrairMensagemErro = (error) => {
-    return (
-      error?.response?.data?.mensagem ||
-      error?.response?.data?.message ||
-      error?.response?.data?.error ||
-      'Não foi possível registrar a movimentação. Verifique a API e tente novamente.'
-    );
+    return formatApiError(error, 'Não foi possível registrar a movimentação. Verifique os dados e tente novamente.');
   };
 
   const handleSubmit = async (event) => {

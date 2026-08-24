@@ -4,6 +4,7 @@ import Header from '../../components/Header.jsx';
 import Navbar from '../../components/Navbar.jsx';
 import Sidebar from '../../components/Sidebar.jsx';
 import { createFuncionario } from '../../services/funcionarioService.js';
+import { formatApiError } from '../../utils/errorFormatter.js';
 
 const roleOptions = [
   { value: 'ADMIN', label: 'ADMIN' },
@@ -14,6 +15,7 @@ export default function CadastroFuncionario() {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [role, setRole] = useState('FUNCIONARIO');
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -27,6 +29,18 @@ export default function CadastroFuncionario() {
 
     if (!nomeLimpo || !emailLimpo || !senhaLimpa || !role) {
       setError('Informe nome, e-mail, senha e role para continuar.');
+      setMessage('');
+      return;
+    }
+
+    if (!emailLimpo.toLowerCase().endsWith('@creche.com')) {
+      setError('O e-mail precisa terminar com @creche.com.');
+      setMessage('');
+      return;
+    }
+
+    if (senhaLimpa.length < 6) {
+      setError('A senha precisa ter pelo menos 6 dígitos.');
       setMessage('');
       return;
     }
@@ -46,8 +60,7 @@ export default function CadastroFuncionario() {
       setSenha('');
       setRole('FUNCIONARIO');
     } catch (err) {
-      const apiMessage = err?.response?.data?.message || err?.response?.data?.mensagem;
-      setError(apiMessage || 'Não foi possível cadastrar o funcionário. Verifique a API e tente novamente.');
+      setError(formatApiError(err, 'Não foi possível cadastrar o funcionário. Verifique os dados e tente novamente.'));
       setMessage('');
     }
   };
@@ -94,14 +107,36 @@ export default function CadastroFuncionario() {
 
                 <div className="field">
                   <label htmlFor="funcionario-senha">Senha</label>
-                  <input
-                    id="funcionario-senha"
-                    type="password"
-                    value={senha}
-                    onChange={(event) => setSenha(event.target.value)}
-                    placeholder="Digite uma senha"
-                    required
-                  />
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      id="funcionario-senha"
+                      type={showPassword ? 'text' : 'password'}
+                      value={senha}
+                      onChange={(event) => setSenha(event.target.value)}
+                      placeholder="Digite uma senha"
+                      required
+                      style={{ paddingRight: '42px' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      aria-label={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+                      style={{
+                        position: 'absolute',
+                        right: '10px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        border: 'none',
+                        background: 'transparent',
+                        color: '#4c6ef5',
+                        cursor: 'pointer',
+                        fontWeight: 700,
+                        fontSize: '12px',
+                      }}
+                    >
+                      {showPassword ? 'Ocultar' : 'Ver'}
+                    </button>
+                  </div>
                 </div>
 
                 <div className="field">

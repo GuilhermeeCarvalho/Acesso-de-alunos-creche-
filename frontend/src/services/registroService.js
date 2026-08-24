@@ -21,3 +21,8 @@ export async function registrarMovimentacao(tipo, payload) {
   const response = await api.post(`/registro/${tipo}`, payload);
   return unwrapResponse(response);
 }
+
+export async function deleteRegistro(id) {
+  const response = await api.delete(`/registro/${id}`);
+  return unwrapResponse(response);
+}

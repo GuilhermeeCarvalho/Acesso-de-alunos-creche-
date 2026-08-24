@@ -58,6 +58,21 @@ public class ResponsavelCriancaController {
         );
     }
 
+    @Operation(summary = "Atualizar relação do responsável", description = "Atualiza o tipo de relacionamento entre uma criança e um responsável.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Relação atualizada com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos")
+    })
+    @PutMapping("/crianca/{criancaId}/responsavel/{responsavelId}/relacao")
+    public ResponseEntity<?> atualizarRelacao(
+            @Parameter(description = "ID da criança") @PathVariable Long criancaId,
+            @Parameter(description = "ID do responsável") @PathVariable Long responsavelId,
+            @RequestBody VinculoResponsavelRequest request
+    ) {
+        service.atualizarRelacao(criancaId, responsavelId, request.getRelacao());
+        return ResponseEntity.ok().build();
+    }
+
     @Operation(summary = "Remover vínculo do responsável", description = "Remove a associação entre um responsável e uma criança.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Vínculo removido com sucesso"),

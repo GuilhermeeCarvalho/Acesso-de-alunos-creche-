@@ -15,6 +15,11 @@ export async function updateFuncionario(id, payload) {
   return unwrapResponse(response);
 }
 
+export async function updateFuncionarioSenha(id, novaSenha) {
+  const response = await api.put(`/funcionarios/${id}/senha`, { senha: novaSenha });
+  return unwrapResponse(response);
+}
+
 export async function deleteFuncionario(id) {
   const response = await api.delete(`/funcionarios/${id}`);
   return unwrapResponse(response);

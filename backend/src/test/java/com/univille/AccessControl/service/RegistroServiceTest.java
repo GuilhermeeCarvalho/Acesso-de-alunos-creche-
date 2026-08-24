@@ -76,4 +76,16 @@ class RegistroServiceTest {
         assertEquals("Aluno chegou acompanhado de tia", captor.getValue().getObservacao());
         assertEquals(TipoRegistro.ENTRADA, captor.getValue().getTipo());
     }
+
+    @Test
+    void deveExcluirRegistroPorId() {
+        Registro registro = new Registro();
+        registro.setId(7L);
+
+        when(registroRepository.findById(7L)).thenReturn(Optional.of(registro));
+
+        registroService.excluir(7L);
+
+        verify(registroRepository).delete(registro);
+    }
 }

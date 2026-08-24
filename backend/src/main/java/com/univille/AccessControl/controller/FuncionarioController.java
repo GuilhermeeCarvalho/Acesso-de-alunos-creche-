@@ -1,6 +1,7 @@
 package com.univille.AccessControl.controller;
 
 import com.univille.AccessControl.config.OpenApiConfig;
+import com.univille.AccessControl.dto.AtualizarSenhaRequest;
 import com.univille.AccessControl.dto.FuncionarioListDTO;
 import com.univille.AccessControl.model.Funcionario;
 import com.univille.AccessControl.service.FuncionarioService;
@@ -49,6 +50,20 @@ public class FuncionarioController {
     @GetMapping
     public List<FuncionarioListDTO> listar() {
         return service.listarTodos();
+    }
+
+    @Operation(summary = "Atualizar senha do funcionário", description = "Permite que um administrador redefina a senha de um funcionário.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Senha atualizada com sucesso"),
+            @ApiResponse(responseCode = "400", description = "Dados inválidos"),
+            @ApiResponse(responseCode = "404", description = "Funcionário não encontrado"),
+            @ApiResponse(responseCode = "403", description = "Acesso negado")
+    })
+    @PutMapping("/{id}/senha")
+    public ResponseEntity<Funcionario> atualizarSenha(@PathVariable Long id,
+                                                    @RequestBody @Valid AtualizarSenhaRequest request) {
+        Funcionario atualizado = service.atualizarSenha(id, request.getSenha());
+        return ResponseEntity.ok(atualizado);
     }
 
     @Operation(summary = "Excluir funcionário", description = "Remove um funcionário do sistema.")

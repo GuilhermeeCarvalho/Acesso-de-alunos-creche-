@@ -6,8 +6,9 @@ import Header from '../../components/Header.jsx';
 import Navbar from '../../components/Navbar.jsx';
 import Sidebar from '../../components/Sidebar.jsx';
 import { listAlunos, updateAluno, deleteAluno, uploadDocumento, getDocumento, deleteDocumento } from '../../services/alunoService.js';
-import { listResponsaveisDaCrianca, createResponsavel, updateResponsavel, deleteResponsavel, deleteVinculo } from '../../services/responsavelService.js';
+import { listResponsaveisDaCrianca, createResponsavel, updateResponsavel, deleteResponsavel, deleteVinculo, updateVinculoRelacao } from '../../services/responsavelService.js';
 import { createVinculo } from '../../services/vinculoService.js';
+import { formatApiError } from '../../utils/errorFormatter.js';
 
 const fallbackAlunos = [
   {
@@ -364,18 +365,23 @@ let qrSize = 34; // QR inside card
     }
 
     try {
-      await updateResponsavel(editingResponsavel.id || editingResponsavel.responsavelId, {
+      const responsavelId = editingResponsavel.id || editingResponsavel.responsavelId;
+
+      await updateResponsavel(responsavelId, {
         nome: editingResponsavel.nome,
         telefone: editingResponsavel.telefone,
       });
-     
+
+      if (editingResponsavel.alunoId && editingResponsavel.relacao) {
+        await updateVinculoRelacao(editingResponsavel.alunoId, responsavelId, editingResponsavel.relacao);
+      }
+
       setShowEditResponsavel(false);
       setEditingResponsavel(null);
       await refreshAlunos();
     } catch (err) {
-     
       console.error(err);
-      alert('Não foi possível atualizar o responsável. Verifique a API.');
+      alert(formatApiError(err, 'Não foi possível atualizar o responsável. Verifique os dados e tente novamente.'));
     }
   }
 
@@ -389,7 +395,7 @@ let qrSize = 34; // QR inside card
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error(err);
-      alert('Não foi possível excluir o responsável. Verifique a API.');
+      alert(formatApiError(err, 'Não foi possível excluir o responsável porque a criança precisa manter ao menos um responsável vinculado.'));
     }
   }
 
@@ -672,7 +678,17 @@ let qrSize = 34; // QR inside card
 
                     <div className="field">
                       <label>Turma</label>
-                      <input value={editingAluno.turma} onChange={(e) => setEditingAluno({ ...editingAluno, turma: e.target.value })} />
+                      <select
+                        value={editingAluno.turma || ''}
+                        onChange={(e) => setEditingAluno({ ...editingAluno, turma: e.target.value })}
+                      >
+                        <option value="">Selecione a turma</option>
+                        {turmasDisponiveis.map((turma) => (
+                          <option key={turma} value={turma}>
+                            {turma}
+                          </option>
+                        ))}
+                      </select>
                     </div>
 
                     <div className="field">

@@ -6,7 +6,7 @@ import Navbar from '../../components/Navbar.jsx';
 import Sidebar from '../../components/Sidebar.jsx';
 import Table from '../../components/Table.jsx';
 import { listAlunos } from '../../services/alunoService.js';
-import { listRegistros } from '../../services/registroService.js';
+import { deleteRegistro, listRegistros } from '../../services/registroService.js';
 
 const fallbackRegistros = [
   {
@@ -243,6 +243,24 @@ export default function Relatorio() {
       dataFinalFiltro ? `Até: ${dataFinalFiltro}` : null,
     ].filter(Boolean);
   }, [alunoFiltro, alunosDisponiveis, dataFinalFiltro, dataInicialFiltro, filtroAtraso, filtroPlantao, turmaFiltro, turnoFiltro]);
+
+  async function handleDeleteRegistro(registroId) {
+    const registro = registros.find((item) => item.id === registroId);
+    const nomeRegistro = registro ? `${registro.crianca} • ${registro.tipo}` : 'este registro';
+
+    const confirmado = window.confirm(`Deseja apagar ${nomeRegistro}?`);
+    if (!confirmado) {
+      return;
+    }
+
+    try {
+      await deleteRegistro(registroId);
+      setRegistros((atual) => atual.filter((item) => item.id !== registroId));
+    } catch (error) {
+      const mensagem = error?.response?.data?.message || error?.message || 'Não foi possível apagar o registro.';
+      window.alert(mensagem);
+    }
+  }
 
   const exportarPdf = () => {
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
@@ -568,6 +586,20 @@ export default function Relatorio() {
                       >
                         {registro.foraDoPadrao ? 'Com atraso' : 'Sem atraso'}
                       </span>
+                    ),
+                  },
+                  {
+                    key: 'acoes',
+                    label: 'Ações',
+                    render: (registro) => (
+                      <button
+                        type="button"
+                        className="button button--danger button--small"
+                        onClick={() => handleDeleteRegistro(registro.id)}
+                        title="Apagar registro"
+                      >
+                        Apagar
+                      </button>
                     ),
                   },
                 ]}

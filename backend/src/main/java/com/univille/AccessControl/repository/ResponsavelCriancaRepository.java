@@ -18,6 +18,15 @@ public interface ResponsavelCriancaRepository extends JpaRepository<ResponsavelC
 
     @Modifying
     @Transactional
+    @Query("UPDATE ResponsavelCrianca rc SET rc.relacao = :relacao WHERE rc.crianca.id = :criancaId AND rc.responsavel.id = :responsavelId")
+    void updateRelacaoByCriancaIdAndResponsavelId(
+            @Param("criancaId") Long criancaId,
+            @Param("responsavelId") Long responsavelId,
+            @Param("relacao") com.univille.AccessControl.model.TipoRelacao relacao
+    );
+
+    @Modifying
+    @Transactional
     @Query("DELETE FROM ResponsavelCrianca rc WHERE rc.crianca.id = :criancaId AND rc.responsavel.id = :responsavelId")
     void deleteByCriancaIdAndResponsavelId(@Param("criancaId") Long criancaId, @Param("responsavelId") Long responsavelId);
 }
