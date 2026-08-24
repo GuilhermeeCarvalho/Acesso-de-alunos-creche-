@@ -314,10 +314,15 @@ public class CriancaService {
 
         String documentoPath = crianca.getDocumentoPath();
         if (documentoPath != null && !documentoPath.isBlank()) {
-            String bucket = getEnvVar("SUPABASE_BUCKET");
-            String supabaseUrl = getEnvVar("SUPABASE_URL");
-            String serviceKey = getEnvVar("SUPABASE_SERVICE_KEY");
-            excluirDocumentoAnterior(bucket, supabaseUrl, serviceKey, documentoPath);
+            String bucket = getOptionalEnvVar("SUPABASE_BUCKET");
+            String supabaseUrl = getOptionalEnvVar("SUPABASE_URL");
+            String serviceKey = getOptionalEnvVar("SUPABASE_SERVICE_KEY");
+
+            if (bucket != null && supabaseUrl != null && serviceKey != null) {
+                excluirDocumentoAnterior(bucket, supabaseUrl, serviceKey, documentoPath);
+            } else {
+                System.out.println("Supabase não configurado — pulando exclusão de documento para: " + documentoPath);
+            }
         }
 
         registroRepository.deleteByCriancaId(id);
