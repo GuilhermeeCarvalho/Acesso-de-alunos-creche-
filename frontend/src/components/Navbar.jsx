@@ -8,9 +8,9 @@ export default function Navbar() {
     return (
         <nav className="navbar">
             <div className="navbar-left">
-                <Link to="/home">Início</Link>
-                <Link to="/alunos">Alunos</Link>
-                {isAdmin && <Link to="/funcionarios">Funcionários</Link>}
+                <Link className="navbar__link" to="/home">Início</Link>
+                <Link className="navbar__link" to="/alunos">Alunos</Link>
+                {isAdmin && <Link className="navbar__link" to="/funcionarios">Funcionários</Link>}
             </div>
             <div className="navbar-right">
                 {user && (

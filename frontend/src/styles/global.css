@@ -134,21 +134,55 @@ button {
   border-bottom: 1px solid rgba(230, 217, 202, 0.72);
 }
 
-.navbar__links {
+.navbar-left,
+.navbar-right {
   display: flex;
   align-items: center;
+  gap: 10px;
   flex-wrap: wrap;
-  gap: 8px;
 }
 
-.navbar__user {
-  display: flex;
+.navbar__link,
+.button-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid transparent;
+  transition: 0.2s ease;
+}
+
+.navbar__link:hover,
+.navbar__link.active,
+.button-link:hover {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  border-color: rgba(31, 122, 112, 0.14);
+}
+
+.button-link {
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.navbar-user {
+  display: inline-flex;
   align-items: center;
   gap: 12px;
   padding: 10px 14px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid var(--border);
+  color: var(--muted);
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .page {
@@ -550,6 +584,11 @@ button {
     height: auto;
     border-right: 0;
     border-bottom: 1px solid var(--border);
+    padding: 18px 14px 14px;
+  }
+
+  .sidebar__nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .dashboard-grid,
@@ -570,10 +609,30 @@ button {
   .navbar {
     flex-direction: column;
     align-items: stretch;
+    padding: 12px 14px;
+  }
+
+  .navbar-left,
+  .navbar-right {
+    justify-content: center;
+  }
+
+  .navbar-user {
+    max-width: 100%;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .button,
+  .button-secondary,
+  .button-ghost,
+  .button-link {
+    width: 100%;
   }
 
   .page {
     width: min(100%, calc(100% - 24px));
+    padding-top: 18px;
   }
 
   .page__hero,
@@ -581,5 +640,38 @@ button {
   .panel,
   .auth-card {
     border-radius: 20px;
+  }
+
+  .panel,
+  .card,
+  .auth-card,
+  .page__hero {
+    padding: 16px;
+  }
+
+  .page__title {
+    font-size: clamp(1.8rem, 8vw, 2.5rem);
+  }
+
+  .field input,
+  .field select,
+  .field textarea {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 520px) {
+  .sidebar__nav {
+    grid-template-columns: 1fr;
+  }
+
+  .navbar-left,
+  .navbar-right {
+    width: 100%;
+  }
+
+  .navbar__link,
+  .button-link {
+    flex: 1 1 auto;
   }
 }
