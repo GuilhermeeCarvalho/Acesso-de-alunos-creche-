@@ -141,7 +141,6 @@ export default function EntradaSaida() {
     () => alunos.find((aluno) => String(aluno.id) === String(criancaId)),
     [alunos, criancaId]
   );
-
   const fecharScanner = async () => {
   if (scannerRef.current) {
     try {
@@ -400,6 +399,12 @@ export default function EntradaSaida() {
                     <option value="saida">Saída</option>
                   </select>
                 </div>
+
+                {alunoSelecionado?.precisaPlantao && alunoSelecionado.plantaoTurno && alunoSelecionado.horarioPlantao && (
+                  <div className="notice field--full">
+                    Horário de plantão cadastrado: {alunoSelecionado.plantaoTurno.toLowerCase()}, {alunoSelecionado.horarioPlantao.replace('-', ' até ')}.
+                  </div>
+                )}
 
                 <div className="field field--full">
                   <label htmlFor="registro-observacao">Observação</label>

@@ -88,4 +88,35 @@ class RegistroServiceTest {
 
         verify(registroRepository).delete(registro);
     }
+
+    @Test
+    void devePermitirSaidaNoPlantaoMatutino() {
+        Crianca crianca = new Crianca();
+        crianca.setId(1L);
+        crianca.setPrecisaPlantao(true);
+        crianca.setPlantaoTurno("Matutino");
+        crianca.setHorarioPlantao("06:30-07:00");
+
+        Responsavel responsavel = new Responsavel();
+        responsavel.setId(2L);
+
+        Funcionario funcionario = new Funcionario();
+        funcionario.setEmail("funcionario@teste.com");
+
+        RegistroRequest request = new RegistroRequest();
+        request.setCriancaId(1L);
+        request.setResponsavelId(2L);
+
+        SecurityContextHolder.getContext().setAuthentication(new TestingAuthenticationToken("funcionario@teste.com", null));
+        when(criancaRepository.findById(1L)).thenReturn(Optional.of(crianca));
+        when(responsavelRepository.findById(2L)).thenReturn(Optional.of(responsavel));
+        when(funcionarioRepository.findByEmail("funcionario@teste.com")).thenReturn(Optional.of(funcionario));
+        when(registroRepository.findTopByCriancaIdOrderByDataHoraDesc(1L)).thenReturn(Optional.empty());
+        when(registroRepository.save(any(Registro.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Registro resultado = registroService.registrarSaida(request);
+
+        assertEquals(TipoRegistro.SAIDA, resultado.getTipo());
+        verify(registroRepository).save(any(Registro.class));
+    }
 }

@@ -8,6 +8,7 @@ import { createAluno, uploadDocumento } from '../../services/alunoService.js';
 import { createResponsavel } from '../../services/responsavelService.js';
 import { createVinculo } from '../../services/vinculoService.js';
 import { formatApiError } from '../../utils/errorFormatter.js';
+import { horariosPlantaoParaTurma, turmaTemHorarioPlantao, turmasComHorarioPlantao } from '../../constants/plantao.js';
 
 const relacaoOptions = ['PAI', 'MAE', 'IRMAO', 'TIO', 'AVO', 'RESPONSAVEL_LEGAL'];
 
@@ -47,8 +48,11 @@ export default function CadastroAluno() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [precisaPlantao, setPrecisaPlantao] = useState(false);
+  const [plantaoTurno, setPlantaoTurno] = useState('');
+  const [horarioPlantao, setHorarioPlantao] = useState('');
   const [turno, setTurno] = useState('');
   const [arquivoDocumento, setArquivoDocumento] = useState(null);
+  const turmaDoFormulario = creatingTurma ? novaTurma.trim() : turma.trim();
 
   const addResponsavel = () => {
     setResponsaveis((current) => [...current, createResponsavelForm()]);
@@ -81,7 +85,7 @@ export default function CadastroAluno() {
     setMessage('');
 
     const nomeLimpo = nome.trim();
-    const turmaFinal = creatingTurma ? novaTurma.trim() : turma.trim();
+    const turmaFinal = turmaDoFormulario;
 
     const responsaveisLimpos = responsaveis.map((responsavel) => ({
       nome: responsavel.nome.trim(),
@@ -113,6 +117,16 @@ export default function CadastroAluno() {
       return;
     }
 
+    if (precisaPlantao && !turmaTemHorarioPlantao(turmaFinal)) {
+      setError(`Os horários de plantão estão configurados somente para: ${turmasComHorarioPlantao.join(', ')}.`);
+      return;
+    }
+
+    if (precisaPlantao && (!plantaoTurno || !horarioPlantao)) {
+      setError('Selecione o turno e o horário do plantão.');
+      return;
+    }
+
     try {
       // cria a criança SEM plantão primeiro
       // porque o backend valida documento quando precisaPlantao = true
@@ -121,6 +135,8 @@ export default function CadastroAluno() {
         turma: turmaFinal,
         precisaPlantao: false,
         turno: turno.trim() || null,
+        plantaoTurno: precisaPlantao ? plantaoTurno : null,
+        horarioPlantao: precisaPlantao ? horarioPlantao : null,
       });
 
       // se marcou plantão, apenas sobe o documento
@@ -155,6 +171,8 @@ export default function CadastroAluno() {
       setCreatingTurma(false);
       setResponsaveis([createResponsavelForm()]);
       setPrecisaPlantao(false);
+      setPlantaoTurno('');
+      setHorarioPlantao('');
       setTurno('');
       setArquivoDocumento(null);
     } catch (err) {
@@ -203,6 +221,8 @@ export default function CadastroAluno() {
                       } else {
                         setCreatingTurma(false);
                         setTurma(val);
+                        setPlantaoTurno('');
+                        setHorarioPlantao('');
                       }
                     }}
                     required
@@ -256,7 +276,11 @@ export default function CadastroAluno() {
                       type="button"
                       className={!precisaPlantao ? 'button button--secondary' : 'button'}
                       style={{ minHeight: '40px', padding: '0 16px' }}
-                      onClick={() => setPrecisaPlantao(false)}
+                      onClick={() => {
+                        setPrecisaPlantao(false);
+                        setPlantaoTurno('');
+                        setHorarioPlantao('');
+                      }}
                     >
                       Não
                     </button>
@@ -264,14 +288,64 @@ export default function CadastroAluno() {
                 </div>
 
                 {precisaPlantao && (
-                  <div className="field field--full">
-                    <label>Documento (JPG até 5MB)</label>
-                    <input
-                      type="file"
-                      accept="image/jpeg"
-                      onChange={(e) => setArquivoDocumento(e.target.files?.[0] || null)}
-                    />
-                  </div>
+                  <>
+                    {turmaTemHorarioPlantao(turmaDoFormulario) ? (
+                      <section
+                        className="field field--full"
+                        style={{ padding: '16px', border: '1px solid #d9e7ff', borderRadius: '12px', background: '#f8fbff' }}
+                      >
+                        <strong>Horário de plantão</strong>
+                        <div className="form-grid" style={{ marginTop: '12px' }}>
+                          <div className="field">
+                            <label htmlFor="aluno-plantao-turno">Turno do plantão</label>
+                            <select
+                              id="aluno-plantao-turno"
+                              value={plantaoTurno}
+                              onChange={(event) => {
+                                setPlantaoTurno(event.target.value);
+                                setHorarioPlantao('');
+                              }}
+                              required
+                            >
+                              <option value="">Selecione o turno</option>
+                              <option value="Matutino">Matutino (somente entrada)</option>
+                              <option value="Vespertino">Vespertino (somente saída)</option>
+                            </select>
+                          </div>
+                          {plantaoTurno && (
+                            <div className="field">
+                              <label htmlFor="aluno-plantao-horario">Faixa de horário</label>
+                              <select
+                                id="aluno-plantao-horario"
+                                value={horarioPlantao}
+                                onChange={(event) => setHorarioPlantao(event.target.value)}
+                                required
+                              >
+                                <option value="">Selecione o horário</option>
+                                {horariosPlantaoParaTurma(turmaDoFormulario, plantaoTurno).map((horario) => (
+                                  <option key={horario.value} value={horario.value}>
+                                    {horario.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+                        </div>
+                      </section>
+                    ) : (
+                      <div className="notice notice--error field--full">
+                        Os horários de plantão estão disponíveis somente para: {turmasComHorarioPlantao.join(', ')}.
+                      </div>
+                    )}
+                    <div className="field field--full">
+                      <label>Documento (JPG até 5MB)</label>
+                      <input
+                        type="file"
+                        accept="image/jpeg"
+                        onChange={(e) => setArquivoDocumento(e.target.files?.[0] || null)}
+                      />
+                    </div>
+                  </>
                 )}
               </div>
 

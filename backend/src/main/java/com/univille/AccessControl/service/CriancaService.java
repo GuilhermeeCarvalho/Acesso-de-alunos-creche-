@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.univille.AccessControl.exception.RecursoNaoEncontradoException;
+import com.univille.AccessControl.exception.RegraNegocioException;
 import com.univille.AccessControl.model.Crianca;
 import com.univille.AccessControl.repository.CriancaRepository;
 import com.univille.AccessControl.repository.RegistroRepository;
@@ -38,6 +39,7 @@ public class CriancaService {
     }
 
     public Crianca salvar(Crianca crianca) {
+        validarHorarioPlantao(crianca);
         return criancaRepository.save(crianca);
     }
 
@@ -101,6 +103,8 @@ public class CriancaService {
         crianca.setDocumentoPath(null);
         crianca.setDocumentoAtualizadoEm(null);
         crianca.setPrecisaPlantao(false);
+        crianca.setPlantaoTurno(null);
+        crianca.setHorarioPlantao(null);
 
         return criancaRepository.save(crianca);
     }
@@ -286,26 +290,67 @@ public class CriancaService {
         return criancaRepository.findAll();
     }
 
-   public Crianca atualizar(Long id, Crianca dadosAtualizados) {
-    Crianca crianca = criancaRepository.findById(id)
-            .orElseThrow(() -> new RecursoNaoEncontradoException("Criança não encontrada"));
+    public Crianca atualizar(Long id, Crianca dadosAtualizados) {
+        Crianca crianca = criancaRepository.findById(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Criança não encontrada"));
 
-    if (dadosAtualizados.getNome() != null && !dadosAtualizados.getNome().isBlank()) {
-        crianca.setNome(dadosAtualizados.getNome());
+        if (dadosAtualizados.getNome() != null && !dadosAtualizados.getNome().isBlank()) {
+            crianca.setNome(dadosAtualizados.getNome());
+        }
+
+        if (dadosAtualizados.getTurma() != null && !dadosAtualizados.getTurma().isBlank()) {
+            crianca.setTurma(dadosAtualizados.getTurma());
+        }
+
+        if (dadosAtualizados.getTurno() != null) {
+            crianca.setTurno(dadosAtualizados.getTurno().isBlank() ? null : dadosAtualizados.getTurno());
+        }
+
+        crianca.setPrecisaPlantao(dadosAtualizados.isPrecisaPlantao());
+        if (dadosAtualizados.isPrecisaPlantao()) {
+            crianca.setPlantaoTurno(dadosAtualizados.getPlantaoTurno());
+            crianca.setHorarioPlantao(dadosAtualizados.getHorarioPlantao());
+        } else {
+            crianca.setPlantaoTurno(null);
+            crianca.setHorarioPlantao(null);
+        }
+
+        validarHorarioPlantao(crianca);
+        return criancaRepository.save(crianca);
     }
 
-    if (dadosAtualizados.getTurma() != null && !dadosAtualizados.getTurma().isBlank()) {
-        crianca.setTurma(dadosAtualizados.getTurma());
+    private void validarHorarioPlantao(Crianca crianca) {
+        if (!crianca.isPrecisaPlantao()) {
+            return;
+        }
+
+        String turma = crianca.getTurma();
+        boolean turmaComHorario = turma != null && switch (turma) {
+            case "Berçário", "Maternal IA", "Maternal IB", "Maternal IIA",
+                    "Maternal IIB", "Maternal IIC", "Maternal IID", "Maternal IIE", "Maternal IIF",
+                    "PRÉ IA", "PRÉ IB", "PRÉ IC", "PRÉ IIA", "PRÉ IIB", "PRÉ IIC" -> true;
+            default -> false;
+        };
+        if (!turmaComHorario) {
+            throw new RegraNegocioException("Horário de plantão não configurado para esta turma");
+        }
+
+        String horario = crianca.getHorarioPlantao();
+        boolean turmaPre = List.of("PRÉ IA", "PRÉ IB", "PRÉ IC", "PRÉ IIA", "PRÉ IIB", "PRÉ IIC")
+                .contains(turma);
+        boolean horarioValido = horario != null && switch (crianca.getPlantaoTurno() == null ? "" : crianca.getPlantaoTurno()) {
+            case "Matutino" -> (turmaPre
+                    ? List.of("07:00-07:30", "07:30-08:15")
+                    : List.of("06:30-07:00", "07:00-07:30", "07:30-08:15"))
+                    .contains(horario);
+            case "Vespertino" -> List.of("16:15-16:45", "16:45-17:30")
+                    .contains(horario);
+            default -> false;
+        };
+        if (!horarioValido) {
+            throw new RegraNegocioException("Selecione um turno e horário de plantão válidos");
+        }
     }
-
-    if (dadosAtualizados.getTurno() != null) {
-        crianca.setTurno(dadosAtualizados.getTurno().isBlank() ? null : dadosAtualizados.getTurno());
-    }
-
-    crianca.setPrecisaPlantao(dadosAtualizados.isPrecisaPlantao());
-
-    return criancaRepository.save(crianca);
-}
 
     @Transactional
     public void remover(Long id) {

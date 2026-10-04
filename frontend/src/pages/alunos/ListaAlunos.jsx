@@ -9,26 +9,7 @@ import { listAlunos, updateAluno, deleteAluno, uploadDocumento, getDocumento, de
 import { listResponsaveisDaCrianca, createResponsavel, updateResponsavel, deleteResponsavel, deleteVinculo, updateVinculoRelacao } from '../../services/responsavelService.js';
 import { createVinculo } from '../../services/vinculoService.js';
 import { formatApiError } from '../../utils/errorFormatter.js';
-
-const fallbackAlunos = [
-  {
-    id: 1,
-    nome: 'Ana Clara',
-    turma: 'Jardim II',
-    responsaveis: [
-      { nome: 'Marina Souza', telefone: '(47) 99999-9999', relacao: 'MAE' },
-    ],
-  },
-  {
-    id: 2,
-    nome: 'Miguel Santos',
-    turma: 'Maternal I',
-    responsaveis: [
-      { nome: 'Carlos Santos', telefone: '(47) 98888-8888', relacao: 'PAI' },
-      { nome: 'Lucia Santos', telefone: '(47) 97777-7777', relacao: 'MAE' },
-    ],
-  },
-];
+import { horariosPlantaoParaTurma, turmaTemHorarioPlantao, turmasComHorarioPlantao } from '../../constants/plantao.js';
 
 function formatRelacao(relacao) {
   return relacao ? relacao.replaceAll('_', ' ') : 'Sem relação';
@@ -45,7 +26,8 @@ function MenuDotsIcon() {
 }
 
 export default function ListaAlunos() {
-  const [alunos, setAlunos] = useState(fallbackAlunos);
+  const [alunos, setAlunos] = useState([]);
+  const [loadError, setLoadError] = useState('');
   const [turmaFiltro, setTurmaFiltro] = useState('all');
   const [editingAluno, setEditingAluno] = useState(null);
   const [showEdit, setShowEdit] = useState(false);
@@ -180,12 +162,15 @@ let qrSize = 34; // QR inside card
         );
 
         setAlunos(alunosComResponsaveis);
+        setLoadError('');
         return;
       }
 
-      setAlunos(fallbackAlunos);
-    } catch {
-      setAlunos(fallbackAlunos);
+      setAlunos([]);
+      setLoadError('A API retornou uma lista de alunos inválida.');
+    } catch (err) {
+      setAlunos([]);
+      setLoadError(formatApiError(err, 'Não foi possível carregar a lista de alunos. Verifique a API e tente novamente.'));
     }
   }
 
@@ -200,9 +185,8 @@ let qrSize = 34; // QR inside card
       await deleteAluno(alunoId);
       await refreshAlunos();
     } catch (err) {
-      
       console.error(err);
-      alert('Não foi possível excluir o aluno. Verifique a API.');
+      alert(formatApiError(err, 'Não foi possível excluir o aluno. Verifique a API.'));
     }
   }
 
@@ -213,6 +197,8 @@ let qrSize = 34; // QR inside card
       turma: aluno.turma || '',
       turno: aluno.turno || '',
       precisaPlantao: aluno.precisaPlantao || false,
+      plantaoTurno: aluno.plantaoTurno || '',
+      horarioPlantao: aluno.horarioPlantao || '',
       documentoPath: aluno.documentoPath || ''
     });
     setShowEdit(true);
@@ -258,7 +244,9 @@ let qrSize = 34; // QR inside card
         handleCloseDocumentoModal();
       }
 
-      setEditingAluno((prev) => (prev && prev.id === alunoId ? { ...prev, documentoPath: '', precisaPlantao: false } : prev));
+      setEditingAluno((prev) => (prev && prev.id === alunoId
+        ? { ...prev, documentoPath: '', precisaPlantao: false, plantaoTurno: '', horarioPlantao: '' }
+        : prev));
       await refreshAlunos();
       alert('Documento removido com sucesso.');
     } catch (err) {
@@ -275,11 +263,23 @@ let qrSize = 34; // QR inside card
         return;
       }
 
+      if (editingAluno.precisaPlantao && !turmaTemHorarioPlantao(editingAluno.turma)) {
+        alert(`Os horários de plantão estão configurados somente para: ${turmasComHorarioPlantao.join(', ')}.`);
+        return;
+      }
+
+      if (editingAluno.precisaPlantao && (!editingAluno.plantaoTurno || !editingAluno.horarioPlantao)) {
+        alert('Selecione o turno e o horário do plantão.');
+        return;
+      }
+
       const payload = {
         nome: editingAluno.nome,
         turma: editingAluno.turma,
         turno: editingAluno.turno?.trim() ? editingAluno.turno.trim() : null,
-        precisaPlantao: !!editingAluno.precisaPlantao
+        precisaPlantao: !!editingAluno.precisaPlantao,
+        plantaoTurno: editingAluno.precisaPlantao ? editingAluno.plantaoTurno : null,
+        horarioPlantao: editingAluno.precisaPlantao ? editingAluno.horarioPlantao : null,
       };
       
       console.log("EDITING ALUNO:", editingAluno);
@@ -410,6 +410,12 @@ let qrSize = 34; // QR inside card
           <Header eyebrow="Alunos" title="Lista de alunos" description="Consulta rápida das crianças cadastradas e de suas turmas." />
 
           <section className="panel" style={{ marginTop: '22px' }}>
+            {loadError && (
+              <div className="notice notice--error" style={{ marginBottom: '16px' }}>
+                {loadError}
+              </div>
+            )}
+
             <div className="table-toolbar">
               <label className="field" htmlFor="filtro-turma">
                 <span>Filtrar por turma</span>
@@ -680,7 +686,12 @@ let qrSize = 34; // QR inside card
                       <label>Turma</label>
                       <select
                         value={editingAluno.turma || ''}
-                        onChange={(e) => setEditingAluno({ ...editingAluno, turma: e.target.value })}
+                        onChange={(e) => setEditingAluno({
+                          ...editingAluno,
+                          turma: e.target.value,
+                          plantaoTurno: '',
+                          horarioPlantao: '',
+                        })}
                       >
                         <option value="">Selecione a turma</option>
                         {turmasDisponiveis.map((turma) => (
@@ -714,25 +725,82 @@ let qrSize = 34; // QR inside card
                           type="button"
                           className={!editingAluno.precisaPlantao ? 'button button--secondary' : 'button'}
                           style={{ minHeight: '40px', padding: '0 16px' }}
-                          onClick={() => setEditingAluno({ ...editingAluno, precisaPlantao: false })}
+                          onClick={() => setEditingAluno({
+                            ...editingAluno,
+                            precisaPlantao: false,
+                            plantaoTurno: '',
+                            horarioPlantao: '',
+                          })}
                         >
                           Não
                         </button>
                       </div>
                     </div>
                     {editingAluno.precisaPlantao && (
-                      <div className="field">
-                        <label>Documento (JPG até 5MB)</label>
-                        <input type="file" accept="image/jpeg" onChange={(e) => setEditingFile(e.target.files[0])} />
-                        {editingAluno.documentoPath && (
-                          <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                            <div style={{ fontSize: '12px' }}>Documento existente: {editingAluno.documentoPath}</div>
-                            <button type="button" className="button button--danger button--small" onClick={() => handleRemoveDocumento(editingAluno.id)}>
-                              Remover documento atual
-                            </button>
+                      <>
+                        {turmaTemHorarioPlantao(editingAluno.turma) ? (
+                          <section
+                            className="field field--full"
+                            style={{ padding: '16px', border: '1px solid #d9e7ff', borderRadius: '12px', background: '#f8fbff' }}
+                          >
+                            <strong>Horário de plantão</strong>
+                            <div className="form-grid" style={{ marginTop: '12px' }}>
+                              <div className="field">
+                                <label htmlFor="editar-plantao-turno">Turno do plantão</label>
+                                <select
+                                  id="editar-plantao-turno"
+                                  value={editingAluno.plantaoTurno}
+                                  onChange={(event) => setEditingAluno({
+                                    ...editingAluno,
+                                    plantaoTurno: event.target.value,
+                                    horarioPlantao: '',
+                                  })}
+                                >
+                                  <option value="">Selecione o turno</option>
+                                  <option value="Matutino">Matutino (somente entrada)</option>
+                                  <option value="Vespertino">Vespertino (somente saída)</option>
+                                </select>
+                              </div>
+                              {editingAluno.plantaoTurno && (
+                                <div className="field">
+                                  <label htmlFor="editar-plantao-horario">Faixa de horário</label>
+                                  <select
+                                    id="editar-plantao-horario"
+                                    value={editingAluno.horarioPlantao}
+                                    onChange={(event) => setEditingAluno({
+                                      ...editingAluno,
+                                      horarioPlantao: event.target.value,
+                                    })}
+                                  >
+                                    <option value="">Selecione o horário</option>
+                                    {horariosPlantaoParaTurma(editingAluno.turma, editingAluno.plantaoTurno).map((horario) => (
+                                      <option key={horario.value} value={horario.value}>
+                                        {horario.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </div>
+                              )}
+                            </div>
+                          </section>
+                        ) : (
+                          <div className="notice notice--error field--full">
+                            Os horários de plantão estão disponíveis somente para: {turmasComHorarioPlantao.join(', ')}.
                           </div>
                         )}
-                      </div>
+                        <div className="field field--full">
+                          <label>Documento (JPG até 5MB)</label>
+                          <input type="file" accept="image/jpeg" onChange={(e) => setEditingFile(e.target.files[0])} />
+                          {editingAluno.documentoPath && (
+                            <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                              <div style={{ fontSize: '12px' }}>Documento existente: {editingAluno.documentoPath}</div>
+                              <button type="button" className="button button--danger button--small" onClick={() => handleRemoveDocumento(editingAluno.id)}>
+                                Remover documento atual
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </>
                     )}
                   </div>
 

@@ -47,18 +47,22 @@ class CriancaServiceTest {
 
         Crianca dadosAtualizados = new Crianca();
         dadosAtualizados.setNome("Ana");
-        dadosAtualizados.setTurma("Jardim I");
+        dadosAtualizados.setTurma("Maternal IA");
         dadosAtualizados.setPrecisaPlantao(true);
         dadosAtualizados.setTurno("Vespertino");
+        dadosAtualizados.setPlantaoTurno("Vespertino");
+        dadosAtualizados.setHorarioPlantao("16:15-16:45");
 
         when(criancaRepository.findById(1L)).thenReturn(Optional.of(existente));
         when(criancaRepository.save(any(Crianca.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         Crianca resultado = criancaService.atualizar(1L, dadosAtualizados);
 
-        assertEquals("Jardim I", resultado.getTurma());
+        assertEquals("Maternal IA", resultado.getTurma());
         assertTrue(resultado.isPrecisaPlantao());
         assertEquals("Vespertino", resultado.getTurno());
+        assertEquals("Vespertino", resultado.getPlantaoTurno());
+        assertEquals("16:15-16:45", resultado.getHorarioPlantao());
     }
 
     @Test
@@ -78,6 +82,34 @@ class CriancaServiceTest {
         assertNull(resultado.getDocumentoPath());
         assertNull(resultado.getDocumentoAtualizadoEm());
         assertTrue(!resultado.isPrecisaPlantao());
+    }
+
+    @Test
+    void deveAceitarFaixaMatutinaDePlantaoDaTurmaPre() {
+        Crianca dados = new Crianca();
+        dados.setNome("Criança Pré");
+        dados.setTurma("PRÉ IA");
+        dados.setPrecisaPlantao(true);
+        dados.setPlantaoTurno("Matutino");
+        dados.setHorarioPlantao("07:00-07:30");
+
+        when(criancaRepository.save(any(Crianca.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        Crianca resultado = criancaService.salvar(dados);
+
+        assertEquals("07:00-07:30", resultado.getHorarioPlantao());
+    }
+
+    @Test
+    void deveRejeitarFaixaMatutinaDasSeisETrintaParaTurmaPre() {
+        Crianca dados = new Crianca();
+        dados.setNome("Criança Pré");
+        dados.setTurma("PRÉ IA");
+        dados.setPrecisaPlantao(true);
+        dados.setPlantaoTurno("Matutino");
+        dados.setHorarioPlantao("06:30-07:00");
+
+        assertThrows(RegraNegocioException.class, () -> criancaService.salvar(dados));
     }
 
     @Test

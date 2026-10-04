@@ -34,4 +34,6 @@ public class Crianca {
     private boolean precisaPlantao = false;
 
     private String turno;
+    private String plantaoTurno;
+    private String horarioPlantao;
 }

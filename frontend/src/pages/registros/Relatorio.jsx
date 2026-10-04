@@ -7,25 +7,7 @@ import Sidebar from '../../components/Sidebar.jsx';
 import Table from '../../components/Table.jsx';
 import { listAlunos } from '../../services/alunoService.js';
 import { deleteRegistro, listRegistros } from '../../services/registroService.js';
-
-const fallbackRegistros = [
-  {
-    id: 1,
-    crianca: 'Ana Clara',
-    responsavel: 'Marina Souza',
-    funcionario: 'Júlia Lima',
-    tipo: 'ENTRADA',
-    dataHora: '2026-05-23T07:45:00',
-  },
-  {
-    id: 2,
-    crianca: 'Miguel Santos',
-    responsavel: 'Carlos Santos',
-    funcionario: 'Júlia Lima',
-    tipo: 'SAIDA',
-    dataHora: '2026-05-23T17:10:00',
-  },
-];
+import { registroForaDoHorario } from '../../utils/horarioRegistro.js';
 
 function formatarDataHora(dataHora) {
   if (!dataHora) {
@@ -59,6 +41,8 @@ function normalizarRegistro(registro) {
     turma: registro.crianca?.turma || 'Sem turma',
     turno: registro.crianca?.turno || '',
     precisaPlantao: Boolean(registro.crianca?.precisaPlantao),
+    plantaoTurno: registro.crianca?.plantaoTurno || '',
+    horarioPlantao: registro.crianca?.horarioPlantao || '',
     responsavel: registro.responsavel?.nome || registro.responsavel || 'Sem responsável',
     funcionario: registro.funcionario?.nome || registro.funcionario || 'Sem funcionário',
     tipo: registro.tipo ? registro.tipo.replaceAll('_', ' ') : 'Sem tipo',
@@ -78,7 +62,8 @@ function formatarResumoFiltro(valor) {
 }
 
 export default function Relatorio() {
-  const [registros, setRegistros] = useState(() => fallbackRegistros.map(normalizarRegistro));
+  const [registros, setRegistros] = useState([]);
+  const [erroRegistros, setErroRegistros] = useState('');
   const [alunos, setAlunos] = useState([]);
   const [turmaFiltro, setTurmaFiltro] = useState('all');
   const [turnoFiltro, setTurnoFiltro] = useState('all');
@@ -109,12 +94,18 @@ export default function Relatorio() {
       try {
         const data = await listRegistros();
 
-        if (isActive && Array.isArray(data) && data.length > 0) {
+        if (!Array.isArray(data)) {
+          throw new Error('A API retornou uma lista de registros inválida.');
+        }
+
+        if (isActive) {
           setRegistros(data.map(normalizarRegistro));
+          setErroRegistros('');
         }
       } catch {
         if (isActive) {
-          setRegistros(fallbackRegistros.map(normalizarRegistro));
+          setRegistros([]);
+          setErroRegistros('Não foi possível carregar os registros. Verifique a API e tente novamente.');
         }
       }
     }
@@ -129,29 +120,7 @@ export default function Relatorio() {
 
   const registrosComStatus = useMemo(() => {
     return registros.map((registro) => {
-      const turno = registro.turno;
-      const tipo = String(registro.tipo || '').toUpperCase();
-      const dataHora = new Date(registro.dataHoraOriginal);
-
-      if (!registro.precisaPlantao && turno && !Number.isNaN(dataHora.getTime())) {
-        const hora = dataHora.getHours();
-        const minuto = dataHora.getMinutes();
-        const totalMinutos = hora * 60 + minuto;
-
-        const intervalos = {
-          Matutino: { inicio: 7 * 60 + 30, fim: 11 * 60 + 30 },
-          Vespertino: { inicio: 13 * 60, fim: 17 * 60 },
-        };
-
-        const intervalo = intervalos[turno];
-
-        if (intervalo) {
-          const foraDoPadrao = totalMinutos < intervalo.inicio || totalMinutos > intervalo.fim;
-          return { ...registro, foraDoPadrao };
-        }
-      }
-
-      return { ...registro, foraDoPadrao: false };
+      return { ...registro, foraDoPadrao: registroForaDoHorario(registro) };
     });
   }, [registros]);
 
@@ -238,7 +207,7 @@ export default function Relatorio() {
       turnoFiltro !== 'all' ? `Turno: ${turnoFiltro}` : null,
       alunoFiltro !== 'all' ? `Aluno: ${alunoSelecionado?.nome || 'Selecionado'}` : null,
       filtroPlantao !== 'all' ? `Plantão: ${filtroPlantao === 'sim' ? 'Sim' : 'Não'}` : null,
-      filtroAtraso !== 'all' ? `Atraso: ${filtroAtraso === 'sim' ? 'Sim' : 'Não'}` : null,
+      filtroAtraso !== 'all' ? `Fora do horário: ${filtroAtraso === 'sim' ? 'Sim' : 'Não'}` : null,
       dataInicialFiltro ? `De: ${dataInicialFiltro}` : null,
       dataFinalFiltro ? `Até: ${dataFinalFiltro}` : null,
     ].filter(Boolean);
@@ -313,7 +282,7 @@ export default function Relatorio() {
     };
 
     const drawTableRow = (row, y) => {
-      const statusLabel = row.foraDoPadrao ? 'Com atraso' : 'Sem atraso';
+      const statusLabel = row.foraDoPadrao ? 'Fora do horário' : 'Dentro do horário';
       const statusTextColor = row.foraDoPadrao ? [190, 24, 93] : [22, 101, 52];
       const rowFill = row.foraDoPadrao ? [255, 241, 242] : [236, 253, 245];
       const values = [
@@ -480,7 +449,7 @@ export default function Relatorio() {
               </label>
 
               <label className="field" style={{ marginBottom: 0 }}>
-                <span>Atraso</span>
+                <span>Fora do horário</span>
                 <select value={filtroAtraso} onChange={(event) => setFiltroAtraso(event.target.value)}>
                   <option value="all">Todos</option>
                   <option value="sim">Sim</option>
@@ -572,7 +541,7 @@ export default function Relatorio() {
                   { key: 'dataHora', label: 'Data e hora' },
                   {
                     key: 'foraDoPadrao',
-                    label: 'Atraso',
+                    label: 'Horário',
                     render: (registro) => (
                       <span
                         style={{
@@ -584,7 +553,7 @@ export default function Relatorio() {
                           display: 'inline-block',
                         }}
                       >
-                        {registro.foraDoPadrao ? 'Com atraso' : 'Sem atraso'}
+                        {registro.foraDoPadrao ? 'Fora do horário' : 'Dentro do horário'}
                       </span>
                     ),
                   },
@@ -604,7 +573,7 @@ export default function Relatorio() {
                   },
                 ]}
                 rows={registrosFiltrados}
-                emptyMessage="Ainda não existem registros para exibir."
+                emptyMessage={erroRegistros || 'Ainda não existem registros para exibir.'}
                 getRowStyle={(registro) =>
                   registro.foraDoPadrao
                     ? {

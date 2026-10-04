@@ -1,0 +1,3 @@
+ALTER TABLE crianca
+    ADD COLUMN IF NOT EXISTS plantao_turno VARCHAR(255),
+    ADD COLUMN IF NOT EXISTS horario_plantao VARCHAR(255);
