@@ -9,7 +9,7 @@ test('formats validation errors from nested field map', () => {
       data: {
         mensagem: 'Erro de validação',
         erros: {
-          telefone: 'Telefone inválido. Ex: (47) 99999-9999 ou 47999999999',
+          telefone: 'Telefone inválido. Ex.: 47 997285634',
           nome: 'Já existe um aluno cadastrado com este nome',
         },
       },
@@ -18,7 +18,7 @@ test('formats validation errors from nested field map', () => {
 
   assert.equal(
     formatApiError(err),
-    'Telefone inválido. Use o formato (47) 99999-9999 ou 47999999999. Já existe um aluno cadastrado com este nome.'
+    'Telefone inválido. Use DDD + 9 dígitos. Ex.: 47 997285634. Já existe um aluno cadastrado com este nome.'
   );
 });
 

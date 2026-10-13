@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.univille.AccessControl.dto.RegistroRequest;
 import com.univille.AccessControl.exception.RecursoNaoEncontradoException;
@@ -48,6 +49,11 @@ public class RegistroService {
         registroRepository.delete(registro);
     }
 
+    @Transactional
+    public void excluirTodos() {
+        registroRepository.deleteAllRegistros();
+    }
+
     public Registro registrarEntrada(RegistroRequest request) {
         return salvarRegistro(request, TipoRegistro.ENTRADA);
     }
@@ -57,6 +63,11 @@ public class RegistroService {
     }
 
     private Registro salvarRegistro(RegistroRequest request, TipoRegistro tipo) {
+        if (request.isResponsavelOutro()
+                && (request.getObservacao() == null || request.getObservacao().isBlank())) {
+            throw new RegraNegocioException("Informe o nome da pessoa que entregou ou buscou o aluno.");
+        }
+
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
 
@@ -65,8 +76,14 @@ public class RegistroService {
         Crianca crianca = criancaRepository.findById(request.getCriancaId())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Criança não encontrada"));
 
-        Responsavel responsavel = responsavelRepository.findById(request.getResponsavelId())
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Responsável não encontrado"));
+        Responsavel responsavel = null;
+        if (!request.isResponsavelOutro()) {
+            if (request.getResponsavelId() == null) {
+                throw new RegraNegocioException("Selecione um responsável ou Outro.");
+            }
+            responsavel = responsavelRepository.findById(request.getResponsavelId())
+                    .orElseThrow(() -> new RecursoNaoEncontradoException("Responsável não encontrado"));
+        }
 
         Funcionario funcionario = funcionarioRepository
                 .findByEmail(emailFuncionario)
@@ -76,21 +93,25 @@ public class RegistroService {
                         )
                 );
 
-        registroRepository.findTopByCriancaIdOrderByDataHoraDesc(crianca.getId())
-                .ifPresent(ultimo -> {
+        var ultimoRegistro = registroRepository.findTopByCriancaIdOrderByDataHoraDesc(crianca.getId());
+        if (tipo == TipoRegistro.SAIDA && ultimoRegistro.isEmpty()) {
+            throw new RegraNegocioException("Não é possível registrar a saída sem uma entrada registrada.");
+        }
 
-                    if (tipo == TipoRegistro.ENTRADA && ultimo.getTipo() == TipoRegistro.ENTRADA) {
-                        throw new RegraNegocioException("Já existe uma entrada sem saída para essa criança");
-                    }
+        ultimoRegistro.ifPresent(ultimo -> {
+            if (tipo == TipoRegistro.ENTRADA && ultimo.getTipo() == TipoRegistro.ENTRADA) {
+                throw new RegraNegocioException("Já existe uma entrada sem saída para essa criança");
+            }
 
-                    if (tipo == TipoRegistro.SAIDA && ultimo.getTipo() == TipoRegistro.SAIDA) {
-                        throw new RegraNegocioException("Já existe uma saída registrada. Entrada não encontrada");
-                    }
-                });
+            if (tipo == TipoRegistro.SAIDA && ultimo.getTipo() == TipoRegistro.SAIDA) {
+                throw new RegraNegocioException("Já existe uma saída registrada. Entrada não encontrada");
+            }
+        });
 
         Registro registro = new Registro();
         registro.setCrianca(crianca);
         registro.setResponsavel(responsavel);
+        registro.setResponsavelOutro(request.isResponsavelOutro());
         registro.setFuncionario(funcionario);
         registro.setTipo(tipo);
         registro.setObservacao(request.getObservacao());

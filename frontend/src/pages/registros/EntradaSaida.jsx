@@ -8,6 +8,7 @@ import { useAuth } from '../../contexts/AuthContext.jsx';
 import { listAlunos } from '../../services/alunoService.js';
 import { listResponsaveisDaCrianca } from '../../services/responsavelService.js';
 import { registrarMovimentacao } from '../../services/registroService.js';
+import { relacaoResponsavelLabels } from '../../constants/responsaveis.js';
 import { formatApiError } from '../../utils/errorFormatter.js';
 
 function formatarDataHora(date) {
@@ -18,7 +19,7 @@ function formatarDataHora(date) {
 }
 
 function formatarRelacao(relacao) {
-  return relacao ? relacao.replaceAll('_', ' ') : 'Sem relação';
+  return relacaoResponsavelLabels[relacao] || 'Sem relação';
 }
 
 function CameraIcon() {
@@ -246,7 +247,8 @@ export default function EntradaSaida() {
     event.preventDefault();
 
     const criancaSelecionadaId = Number(criancaId);
-    const responsavelSelecionadoId = Number(responsavelId);
+    const selecionouOutro = responsavelId === 'OUTRO';
+    const responsavelSelecionadoId = selecionouOutro ? null : Number(responsavelId);
 
     if (!usuario?.token) {
       setError('Faça login novamente para registrar a movimentação.');
@@ -254,7 +256,7 @@ export default function EntradaSaida() {
       return;
     }
 
-    if (!criancaSelecionadaId || !responsavelSelecionadoId) {
+    if (!criancaSelecionadaId || (!selecionouOutro && !responsavelSelecionadoId)) {
       setError('Selecione a criança e o responsável para continuar.');
       setMessage('');
       return;
@@ -266,8 +268,14 @@ export default function EntradaSaida() {
       return;
     }
 
-    if (!responsaveis.some((responsavel) => Number(responsavel.responsavelId) === responsavelSelecionadoId)) {
+    if (!selecionouOutro && !responsaveis.some((responsavel) => Number(responsavel.responsavelId) === responsavelSelecionadoId)) {
       setError('Selecione um responsável vinculado à criança escolhida.');
+      setMessage('');
+      return;
+    }
+
+    if (selecionouOutro && !observacao.trim()) {
+      setError('Informe o nome da pessoa que entregou ou buscou o aluno.');
       setMessage('');
       return;
     }
@@ -276,6 +284,7 @@ export default function EntradaSaida() {
       const registro = await registrarMovimentacao(tipo, {
         criancaId: criancaSelecionadaId,
         responsavelId: responsavelSelecionadoId,
+        responsavelOutro: selecionouOutro,
         observacao: observacao.trim(),
       });
 
@@ -389,6 +398,7 @@ export default function EntradaSaida() {
                         {option.label}
                       </option>
                     ))}
+                    {criancaId && !loadingResponsaveis && <option value="OUTRO">Outro</option>}
                   </select>
                 </div>
 
@@ -407,14 +417,19 @@ export default function EntradaSaida() {
                 )}
 
                 <div className="field field--full">
-                  <label htmlFor="registro-observacao">Observação</label>
+                  <label htmlFor="registro-observacao">
+                    Observação{responsavelId === 'OUTRO' ? ' (obrigatória)' : ''}
+                  </label>
                   <textarea
                     id="registro-observacao"
                     value={observacao}
                     onChange={(event) => setObservacao(event.target.value)}
-                    placeholder="Ex.: aluno chegou acompanhado, houve atraso, retorno após atendimento..."
+                    placeholder={responsavelId === 'OUTRO'
+                      ? 'Informe o nome de quem entregou ou buscou o aluno.'
+                      : 'Ex.: aluno chegou acompanhado, houve atraso, retorno após atendimento...'}
                     rows={3}
                     style={{ resize: 'vertical' }}
+                    required={responsavelId === 'OUTRO'}
                   />
                 </div>
               </div>

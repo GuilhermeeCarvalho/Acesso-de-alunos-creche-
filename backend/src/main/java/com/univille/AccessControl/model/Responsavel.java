@@ -19,8 +19,8 @@ public class Responsavel {
 
     @NotBlank (message = "O telefone do responsável é obrigatório")
     @Pattern(
-            regexp = "^(\\+55\\s?)?\\(?\\d{2}\\)?\\s?9?\\d{4}-?\\d{4}$",
-            message = "Telefone inválido. Ex: (47) 99999-9999 ou 47999999999"
+            regexp = "^(\\+55\\s?)?\\(?\\d{2}\\)?\\s?9\\d{4}-?\\d{4}$",
+            message = "Telefone inválido. Use DDD + 9 dígitos. Ex.: 47 997285634"
     )
     private String telefone;
 }

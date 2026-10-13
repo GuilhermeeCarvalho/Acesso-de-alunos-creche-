@@ -1,17 +1,10 @@
-import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
 export default function Navbar() {
     const { user, logout } = useAuth();
-    const isAdmin = user?.role === 'ADMIN';
 
     return (
         <nav className="navbar">
-            <div className="navbar-left">
-                <Link className="navbar__link" to="/home">Início</Link>
-                <Link className="navbar__link" to="/alunos">Alunos</Link>
-                {isAdmin && <Link className="navbar__link" to="/funcionarios">Funcionários</Link>}
-            </div>
             <div className="navbar-right">
                 {user && (
                     <>

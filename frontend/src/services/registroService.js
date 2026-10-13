@@ -26,3 +26,8 @@ export async function deleteRegistro(id) {
   const response = await api.delete(`/registro/${id}`);
   return unwrapResponse(response);
 }
+
+export async function deleteAllRegistros() {
+  const response = await api.delete('/registro/todos');
+  return unwrapResponse(response);
+}

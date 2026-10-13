@@ -11,11 +11,14 @@ import com.univille.AccessControl.repository.CriancaRepository;
 import com.univille.AccessControl.repository.ResponsavelCriancaRepository;
 import com.univille.AccessControl.repository.ResponsavelRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 public class ResponsavelCriancaService {
+
+    private static final int MAX_RESPONSAVEIS_POR_CRIANCA = 3;
 
     private final CriancaRepository criancaRepository;
     private final ResponsavelRepository responsavelRepository;
@@ -31,11 +34,16 @@ public class ResponsavelCriancaService {
         this.repository = repository;
     }
 
+    @Transactional
     public void vincular(VinculoResponsavelRequest request) {
 
-        Crianca crianca = criancaRepository.findById(
+        Crianca crianca = criancaRepository.findByIdForUpdate(
                 request.getCriancaId()
         ).orElseThrow();
+
+        if (repository.findByCriancaId(crianca.getId()).size() >= MAX_RESPONSAVEIS_POR_CRIANCA) {
+            throw new RegraNegocioException("Limite de 3 responsáveis por aluno atingido!");
+        }
 
         Responsavel responsavel = responsavelRepository.findById(
                 request.getResponsavelId()

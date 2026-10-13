@@ -7,10 +7,10 @@ import { useAuth } from '../../contexts/AuthContext.jsx';
 import { createAluno, uploadDocumento } from '../../services/alunoService.js';
 import { createResponsavel } from '../../services/responsavelService.js';
 import { createVinculo } from '../../services/vinculoService.js';
+import { relacaoResponsavelOptions } from '../../constants/responsaveis.js';
 import { formatApiError } from '../../utils/errorFormatter.js';
+import { formatTelefoneInput, telefoneCelularValido } from '../../utils/telefone.js';
 import { horariosPlantaoParaTurma, turmaTemHorarioPlantao, turmasComHorarioPlantao } from '../../constants/plantao.js';
-
-const relacaoOptions = ['PAI', 'MAE', 'IRMAO', 'TIO', 'AVO', 'RESPONSAVEL_LEGAL'];
 
 const createResponsavelForm = () => ({
   nome: '',
@@ -55,6 +55,11 @@ export default function CadastroAluno() {
   const turmaDoFormulario = creatingTurma ? novaTurma.trim() : turma.trim();
 
   const addResponsavel = () => {
+    if (responsaveis.length >= 3) {
+      alert('Limite de 3 responsáveis por aluno atingido!');
+      return;
+    }
+
     setResponsaveis((current) => [...current, createResponsavelForm()]);
   };
 
@@ -71,7 +76,7 @@ export default function CadastroAluno() {
         itemIndex === index
           ? {
               ...item,
-              [field]: value,
+              [field]: field === 'telefone' ? formatTelefoneInput(value) : value,
             }
           : item
       )
@@ -100,6 +105,16 @@ export default function CadastroAluno() {
 
     if (responsaveisLimpos.length === 0) {
       setError('Adicione ao menos um responsável.');
+      return;
+    }
+
+    if (responsaveisLimpos.length > 3) {
+      setError('Limite de 3 responsáveis por aluno atingido!');
+      return;
+    }
+
+    if (responsaveisLimpos.some((responsavel) => !telefoneCelularValido(responsavel.telefone))) {
+      setError('Telefone inválido. Use DDD + 9 dígitos. Ex.: 47 997285634.');
       return;
     }
 
@@ -352,7 +367,11 @@ export default function CadastroAluno() {
               <section style={{ marginTop: '24px' }}>
                 <div className="actions-row" style={{ marginBottom: '12px' }}>
                   <strong>Responsáveis</strong>
-                  <button type="button" className="button button--secondary" onClick={addResponsavel}>
+                  <button
+                    type="button"
+                    className="button button--secondary"
+                    onClick={addResponsavel}
+                  >
                     Adicionar responsável
                   </button>
                 </div>
@@ -392,11 +411,14 @@ export default function CadastroAluno() {
                           </label>
                           <input
                             id={`responsavel-telefone-${index}`}
+                            type="tel"
+                            inputMode="numeric"
+                            maxLength={12}
                             value={responsavel.telefone}
                             onChange={(event) =>
                               updateResponsavel(index, 'telefone', event.target.value)
                             }
-                            placeholder="Ex.: (47) 99999-9999"
+                            placeholder="Ex.: 47 997285634"
                             required
                           />
                         </div>
@@ -412,9 +434,9 @@ export default function CadastroAluno() {
                               updateResponsavel(index, 'relacao', event.target.value)
                             }
                           >
-                            {relacaoOptions.map((option) => (
-                              <option key={option} value={option}>
-                                {option.replaceAll('_', ' ')}
+                            {relacaoResponsavelOptions.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
                               </option>
                             ))}
                           </select>

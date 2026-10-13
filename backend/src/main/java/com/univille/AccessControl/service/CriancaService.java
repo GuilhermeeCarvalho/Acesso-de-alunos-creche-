@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -57,15 +58,27 @@ public class CriancaService {
 
         uploadDocumentoParaSupabase(bucket, supabaseUrl, serviceKey, objetoPath, arquivo);
 
-        if (documentoAnterior != null && !documentoAnterior.isBlank()) {
-            excluirDocumentoAnterior(bucket, supabaseUrl, serviceKey, documentoAnterior);
-        }
-
         crianca.setDocumentoPath(objetoPath);
         crianca.setDocumentoAtualizadoEm(LocalDateTime.now());
         crianca.setPrecisaPlantao(true);
 
-        return criancaRepository.save(crianca);
+        Crianca criancaAtualizada;
+        try {
+            criancaAtualizada = criancaRepository.save(crianca);
+        } catch (RuntimeException erroPersistencia) {
+            try {
+                excluirDocumentoAnterior(bucket, supabaseUrl, serviceKey, objetoPath);
+            } catch (RuntimeException erroLimpeza) {
+                erroPersistencia.addSuppressed(erroLimpeza);
+            }
+            throw erroPersistencia;
+        }
+
+        if (documentoAnterior != null && !documentoAnterior.isBlank()) {
+            excluirDocumentoAnterior(bucket, supabaseUrl, serviceKey, documentoAnterior);
+        }
+
+        return criancaAtualizada;
     }
 
     public Map<String, Object> buscarDocumento(Long id) {
@@ -180,7 +193,7 @@ public class CriancaService {
     }
 
     private String construirCaminhoDoObjeto(Long id, String nomeArquivoOriginal) {
-        String nomeArquivo = System.currentTimeMillis() + "-" + nomeArquivoOriginal.replaceAll("[^a-zA-Z0-9._-]", "_");
+        String nomeArquivo = UUID.randomUUID() + "-" + nomeArquivoOriginal.replaceAll("[^a-zA-Z0-9._-]", "_");
         return String.format("criancas/%d/%s", id, nomeArquivo);
     }
 

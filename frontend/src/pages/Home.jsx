@@ -1,23 +1,18 @@
-import { Link } from 'react-router-dom';
-
-import Header from '../components/Header.jsx';
 import Navbar from '../components/Navbar.jsx';
 import Sidebar from '../components/Sidebar.jsx';
 import { useAuth } from '../contexts/AuthContext.jsx';
 
 export default function Home() {
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
-
-  const cards = [
-    { title: 'Cadastro de alunos', description: 'Registre novas crianças e acompanhe as turmas.', to: '/alunos/cadastro', span: 'card--span-4' },
-    { title: 'Lista de alunos', description: 'Veja a base atual com filtros e ações futuras.', to: '/alunos', span: 'card--span-4' },
-    { title: 'Entrada e saída', description: 'Registre horários com precisão e rastreabilidade.', to: '/registros/entrada-saida', span: 'card--span-4' },
-    ...(isAdmin
-      ? [{ title: 'Funcionários', description: 'Gerencie os profissionais vinculados à creche.', to: '/funcionarios', span: 'card--span-6' }]
-      : []),
-    { title: 'Relatórios', description: 'Acesse um resumo dos lançamentos feitos no sistema.', to: '/registros/relatorio', span: isAdmin ? 'card--span-6' : 'card--span-12' },
-  ];
+  const horaAtual = new Date().getHours();
+  const saudacao = horaAtual < 12 ? 'Bom dia' : horaAtual < 18 ? 'Boa tarde' : 'Boa noite';
+  const nomeUsuario = user?.email?.split('@')[0] || 'bem-vindo(a)';
+  const dataAtual = new Intl.DateTimeFormat('pt-BR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  }).format(new Date());
 
   return (
     <div className="app-shell">
@@ -27,41 +22,32 @@ export default function Home() {
         <Navbar />
 
         <main className="page">
-          <Header
-            eyebrow="Painel da Creche"
-            title={isAuthenticated ? `Olá, ${user?.email?.split('@')[0] || 'usuário'}` : 'Acesso de alunos da creche'}
-            description="Organize cadastros, acompanhe entradas e saídas e consulte relatórios em um só lugar."
-            actions={
-              <>
-                <Link className="button" to="/alunos/cadastro">
-                  Novo aluno
-                </Link>
-                <Link className="button-secondary" to="/registros/entrada-saida">
-                  Registrar movimentação
-                </Link>
-              </>
-            }
-          />
-
-          <section className="dashboard-grid">
-            {cards.map((card) => (
-              <article key={card.title} className={`card ${card.span}`}>
-                <span className="eyebrow">Acesso rápido</span>
-                <h3>{card.title}</h3>
-                <p>{card.description}</p>
-                <div className="actions-row" style={{ marginTop: '18px' }}>
-                  <Link className="button-ghost" to={card.to}>
-                    Abrir módulo
-                  </Link>
+          <section className="home-dashboard">
+            <article className="home-welcome">
+              <div className="home-welcome__content">
+                <p className="home-dashboard__label">Acesso da Creche</p>
+                <h1>{saudacao},<br />{nomeUsuario}!</h1>
+                <p className="home-dashboard__description">
+                  Gestão escolar simples e organizada para acompanhar o dia a dia da creche.
+                </p>
+                <div className="home-welcome__details">
+                  <span className="home-welcome__date">{dataAtual}</span>
+                  <span className="home-dashboard__role">
+                    {isAdmin ? 'Administrador' : 'Funcionário'}
+                  </span>
                 </div>
-              </article>
-            ))}
-
-            <article className="panel card--span-12">
-              <h3>Visão geral</h3>
-              <p>
-                Esta estrutura separa a área de autenticação, alunos, funcionários, registros, contexto de acesso e camada de serviços.
-              </p>
+              </div>
+              <div className="home-welcome__visual">
+                <div className="home-welcome__orbit home-welcome__orbit--outer" />
+                <div className="home-welcome__orbit home-welcome__orbit--inner" />
+                <img
+                  className="home-welcome__logo"
+                  src="/images/logo-creche.png"
+                  alt="Logo da CEIM Neide de Fátima Lobemayer"
+                />
+                <span className="home-welcome__spark home-welcome__spark--one" />
+                <span className="home-welcome__spark home-welcome__spark--two" />
+              </div>
             </article>
           </section>
         </main>

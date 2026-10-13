@@ -8,11 +8,13 @@ import Sidebar from '../../components/Sidebar.jsx';
 import { listAlunos, updateAluno, deleteAluno, uploadDocumento, getDocumento, deleteDocumento } from '../../services/alunoService.js';
 import { listResponsaveisDaCrianca, createResponsavel, updateResponsavel, deleteResponsavel, deleteVinculo, updateVinculoRelacao } from '../../services/responsavelService.js';
 import { createVinculo } from '../../services/vinculoService.js';
+import { relacaoResponsavelLabels, relacaoResponsavelOptions } from '../../constants/responsaveis.js';
 import { formatApiError } from '../../utils/errorFormatter.js';
+import { formatTelefoneExistente, formatTelefoneInput, telefoneCelularValido } from '../../utils/telefone.js';
 import { horariosPlantaoParaTurma, turmaTemHorarioPlantao, turmasComHorarioPlantao } from '../../constants/plantao.js';
 
 function formatRelacao(relacao) {
-  return relacao ? relacao.replaceAll('_', ' ') : 'Sem relação';
+  return relacaoResponsavelLabels[relacao] || 'Sem relação';
 }
 
 function MenuDotsIcon() {
@@ -191,6 +193,7 @@ let qrSize = 34; // QR inside card
   }
 
   function handleStartEdit(aluno) {
+    setEditingFile(null);
     setEditingAluno({
       id: aluno.id,
       nome: aluno.nome || '',
@@ -282,12 +285,8 @@ let qrSize = 34; // QR inside card
         horarioPlantao: editingAluno.precisaPlantao ? editingAluno.horarioPlantao : null,
       };
       
-      console.log("EDITING ALUNO:", editingAluno);
-      console.log("PAYLOAD UPDATE:", payload);
-
       await updateAluno(editingAluno.id, payload);
 
-    
       if (editingFile) {
         await uploadDocumento(editingAluno.id, editingFile);
       }
@@ -297,20 +296,36 @@ let qrSize = 34; // QR inside card
       setEditingFile(null);
       await refreshAlunos();
     } catch (err) {
-     
       console.error(err);
-      alert('Não foi possível atualizar o aluno. Verifique a API.');
+      alert(formatApiError(err, 'Não foi possível atualizar o aluno ou salvar o documento.'));
     }
   }
 
   function handleStartAddResponsavel(aluno) {
+    if ((aluno.responsaveis?.length || 0) >= 3) {
+      alert('Limite de 3 responsáveis por aluno atingido!');
+      return;
+    }
+
     setAddingResponsavelFor(aluno.id);
     setNewResponsavel({ nome: '', telefone: '', relacao: 'RESPONSAVEL_LEGAL' });
   }
 
   async function handleAddResponsavel() {
+    const aluno = alunos.find((item) => item.id === addingResponsavelFor);
+    if ((aluno?.responsaveis?.length || 0) >= 3) {
+      alert('Limite de 3 responsáveis por aluno atingido!');
+      setAddingResponsavelFor(null);
+      return;
+    }
+
     if (!newResponsavel.nome || !newResponsavel.telefone) {
       alert('Informe nome e telefone do responsável.');
+      return;
+    }
+
+    if (!telefoneCelularValido(newResponsavel.telefone)) {
+      alert('Telefone inválido. Use DDD + 9 dígitos. Ex.: 47 997285634.');
       return;
     }
 
@@ -321,9 +336,8 @@ let qrSize = 34; // QR inside card
       setNewResponsavel({ nome: '', telefone: '', relacao: 'RESPONSAVEL_LEGAL' });
       await refreshAlunos();
     } catch (err) {
-      
       console.error(err);
-      alert('Não foi possível adicionar o responsável. Verifique a API.');
+      alert(formatApiError(err, 'Não foi possível adicionar o responsável. Verifique a API.'));
     }
   }
 
@@ -353,7 +367,11 @@ let qrSize = 34; // QR inside card
   }
 
   function handleStartEditResponsavel(responsavel, alunoId) {
-    setEditingResponsavel({ ...responsavel, alunoId });
+    setEditingResponsavel({
+      ...responsavel,
+      telefone: formatTelefoneExistente(responsavel.telefone),
+      alunoId,
+    });
     setShowEditResponsavel(true);
     setSelectedResponsavelId(null);
   }
@@ -361,6 +379,11 @@ let qrSize = 34; // QR inside card
   async function handleSaveEditResponsavel() {
     if (!editingResponsavel.nome || !editingResponsavel.telefone) {
       alert('Informe nome e telefone do responsável.');
+      return;
+    }
+
+    if (!telefoneCelularValido(editingResponsavel.telefone)) {
+      alert('Telefone inválido. Use DDD + 9 dígitos. Ex.: 47 997285634.');
       return;
     }
 
@@ -493,7 +516,9 @@ let qrSize = 34; // QR inside card
                                       <span className="responsible-card__badge">{formatRelacao(responsavel.relacao)}</span>
                                     </div>
 
-                                    <div className="responsible-card__meta">Telefone: {responsavel.telefone || 'Não informado'}</div>
+                                    <div className="responsible-card__meta">
+                                      Telefone: {formatTelefoneExistente(responsavel.telefone) || 'Não informado'}
+                                    </div>
 
                                     <button
                                       type="button"
@@ -546,7 +571,12 @@ let qrSize = 34; // QR inside card
                               <button type="button" className="button button--danger button--small" onClick={() => handleDeleteAluno(aluno.id)}>
                                 Excluir
                               </button>
-                              <button type="button" className="button button--secondary button--small" onClick={() => handleStartAddResponsavel(aluno)}>
+                              <button
+                                type="button"
+                                className="button button--secondary button--small"
+                                onClick={() => handleStartAddResponsavel(aluno)}
+                                title={(aluno.responsaveis?.length || 0) >= 3 ? 'Limite de 3 responsáveis por aluno atingido!' : undefined}
+                              >
                                 Adicionar responsável
                               </button>
                               <button type="button" className="button button--secondary button--small" onClick={() => handleGenerateQr(aluno)}>
@@ -790,7 +820,12 @@ let qrSize = 34; // QR inside card
                         )}
                         <div className="field field--full">
                           <label>Documento (JPG até 5MB)</label>
-                          <input type="file" accept="image/jpeg" onChange={(e) => setEditingFile(e.target.files[0])} />
+                          <input
+                            type="file"
+                            accept="image/jpeg"
+                            onChange={(event) => setEditingFile(event.target.files?.[0] || null)}
+                          />
+                          {editingFile && <div style={{ fontSize: '12px' }}>Novo documento selecionado: {editingFile.name}</div>}
                           {editingAluno.documentoPath && (
                             <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                               <div style={{ fontSize: '12px' }}>Documento existente: {editingAluno.documentoPath}</div>
@@ -808,7 +843,11 @@ let qrSize = 34; // QR inside card
                     <button type="button" className="button" onClick={handleSaveEdit}>
                       Salvar
                     </button>
-                    <button type="button" className="button button--secondary" onClick={() => { setShowEdit(false); setEditingAluno(null); }}>
+                    <button type="button" className="button button--secondary" onClick={() => {
+                      setShowEdit(false);
+                      setEditingAluno(null);
+                      setEditingFile(null);
+                    }}>
                       Cancelar
                     </button>
                   </div>
@@ -840,18 +879,25 @@ let qrSize = 34; // QR inside card
 
                     <div className="field">
                       <label>Telefone</label>
-                      <input value={newResponsavel.telefone} onChange={(e) => setNewResponsavel({ ...newResponsavel, telefone: e.target.value })} />
+                      <input
+                        type="tel"
+                        inputMode="numeric"
+                        maxLength={12}
+                        placeholder="Ex.: 47 997285634"
+                        value={newResponsavel.telefone}
+                        onChange={(event) => setNewResponsavel({
+                          ...newResponsavel,
+                          telefone: formatTelefoneInput(event.target.value),
+                        })}
+                      />
                     </div>
 
                     <div className="field field--full">
                       <label>Relação</label>
                       <select value={newResponsavel.relacao} onChange={(e) => setNewResponsavel({ ...newResponsavel, relacao: e.target.value })}>
-                        <option value="PAI">PAI</option>
-                        <option value="MAE">MAE</option>
-                        <option value="IRMAO">IRMAO</option>
-                        <option value="TIO">TIO</option>
-                        <option value="AVO">AVO</option>
-                        <option value="RESPONSAVEL_LEGAL">RESPONSAVEL LEGAL</option>
+                        {relacaoResponsavelOptions.map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
                       </select>
                     </div>
                   </div>
@@ -892,18 +938,25 @@ let qrSize = 34; // QR inside card
 
                     <div className="field">
                       <label>Telefone</label>
-                      <input value={editingResponsavel.telefone} onChange={(e) => setEditingResponsavel({ ...editingResponsavel, telefone: e.target.value })} />
+                      <input
+                        type="tel"
+                        inputMode="numeric"
+                        maxLength={12}
+                        placeholder="Ex.: 47 997285634"
+                        value={editingResponsavel.telefone}
+                        onChange={(event) => setEditingResponsavel({
+                          ...editingResponsavel,
+                          telefone: formatTelefoneInput(event.target.value),
+                        })}
+                      />
                     </div>
 
                     <div className="field field--full">
                       <label>Relação</label>
                       <select value={editingResponsavel.relacao || 'RESPONSAVEL_LEGAL'} onChange={(e) => setEditingResponsavel({ ...editingResponsavel, relacao: e.target.value })}>
-                        <option value="PAI">PAI</option>
-                        <option value="MAE">MAE</option>
-                        <option value="IRMAO">IRMAO</option>
-                        <option value="TIO">TIO</option>
-                        <option value="AVO">AVO</option>
-                        <option value="RESPONSAVEL_LEGAL">RESPONSAVEL LEGAL</option>
+                        {relacaoResponsavelOptions.map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
                       </select>
                     </div>
                   </div>

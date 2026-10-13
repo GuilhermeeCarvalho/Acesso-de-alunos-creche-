@@ -56,6 +56,16 @@ public class RegistroController {
         return ResponseEntity.ok(service.listarTodos());
     }
 
+    @Operation(summary = "Excluir todos os registros", description = "Remove todas as entradas e saídas registradas.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "204", description = "Todos os registros foram removidos")
+    })
+    @DeleteMapping("/todos")
+    public ResponseEntity<Void> excluirTodos() {
+        service.excluirTodos();
+        return ResponseEntity.noContent().build();
+    }
+
     @Operation(summary = "Excluir registro", description = "Remove um registro de entrada ou saída do sistema.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Registro removido com sucesso"),

@@ -12,7 +12,7 @@ function mapFieldMessage(field, message) {
   if (!text) return '';
 
   if (fieldName.includes('telefone')) {
-    return 'Telefone inválido. Use o formato (47) 99999-9999 ou 47999999999.';
+    return 'Telefone inválido. Use DDD + 9 dígitos. Ex.: 47 997285634.';
   }
 
   if (fieldName.includes('nome')) {
@@ -67,7 +67,7 @@ export function formatApiError(err, fallback = 'Não foi possível concluir a op
   }
 
   if (lowerMess.includes('telefone')) {
-    return 'Telefone inválido. Use o formato (47) 99999-9999 ou 47999999999.';
+    return 'Telefone inválido. Use DDD + 9 dígitos. Ex.: 47 997285634.';
   }
 
   if (lowerMess.includes('email')) {

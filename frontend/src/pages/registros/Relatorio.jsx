@@ -6,7 +6,7 @@ import Navbar from '../../components/Navbar.jsx';
 import Sidebar from '../../components/Sidebar.jsx';
 import Table from '../../components/Table.jsx';
 import { listAlunos } from '../../services/alunoService.js';
-import { deleteRegistro, listRegistros } from '../../services/registroService.js';
+import { deleteAllRegistros, deleteRegistro, listRegistros } from '../../services/registroService.js';
 import { registroForaDoHorario } from '../../utils/horarioRegistro.js';
 
 function formatarDataHora(dataHora) {
@@ -33,6 +33,12 @@ function formatarDataFiltro(dataHora) {
   return `${ano}-${mes}-${dia}`;
 }
 
+function formatarDataGrupo(data) {
+  if (!data) return 'Data não informada';
+  const [ano, mes, dia] = data.split('-').map(Number);
+  return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'long' }).format(new Date(ano, mes - 1, dia));
+}
+
 function normalizarRegistro(registro) {
   return {
     id: registro.id,
@@ -43,7 +49,9 @@ function normalizarRegistro(registro) {
     precisaPlantao: Boolean(registro.crianca?.precisaPlantao),
     plantaoTurno: registro.crianca?.plantaoTurno || '',
     horarioPlantao: registro.crianca?.horarioPlantao || '',
-    responsavel: registro.responsavel?.nome || registro.responsavel || 'Sem responsável',
+    responsavel: registro.responsavelOutro
+      ? 'Outro'
+      : registro.responsavel?.nome || registro.responsavel || 'Sem responsável',
     funcionario: registro.funcionario?.nome || registro.funcionario || 'Sem funcionário',
     tipo: registro.tipo ? registro.tipo.replaceAll('_', ' ') : 'Sem tipo',
     observacao: registro.observacao || '—',
@@ -51,14 +59,6 @@ function normalizarRegistro(registro) {
     dataHoraOriginal: registro.dataHora,
     foraDoPadrao: false,
   };
-}
-
-function formatarResumoFiltro(valor) {
-  if (!valor) {
-    return 'Não informado';
-  }
-
-  return valor;
 }
 
 export default function Relatorio() {
@@ -72,6 +72,7 @@ export default function Relatorio() {
   const [filtroAtraso, setFiltroAtraso] = useState('all');
   const [dataInicialFiltro, setDataInicialFiltro] = useState('');
   const [dataFinalFiltro, setDataFinalFiltro] = useState('');
+  const [excluindoTodos, setExcluindoTodos] = useState(false);
 
   useEffect(() => {
     let isActive = true;
@@ -197,6 +198,27 @@ export default function Relatorio() {
     });
   }, [registrosComStatus, turmaFiltro, turnoFiltro, alunoFiltro, alunosDisponiveis, filtroPlantao, filtroAtraso, dataInicialFiltro, dataFinalFiltro]);
 
+  const gruposPorData = useMemo(() => {
+    const grupos = new Map();
+    registrosFiltrados.forEach((registro) => {
+      const data = formatarDataFiltro(registro.dataHoraOriginal) || 'sem-data';
+      if (!grupos.has(data)) grupos.set(data, []);
+      grupos.get(data).push(registro);
+    });
+
+    return Array.from(grupos.entries())
+      .sort(([dataA], [dataB]) => {
+        if (dataA === 'sem-data') return 1;
+        if (dataB === 'sem-data') return -1;
+        return dataB.localeCompare(dataA);
+      })
+      .map(([data, itens]) => ({
+        data,
+        titulo: formatarDataGrupo(data === 'sem-data' ? '' : data),
+        registros: itens.sort((a, b) => String(a.dataHoraOriginal || '').localeCompare(String(b.dataHoraOriginal || ''))),
+      }));
+  }, [registrosFiltrados]);
+
   const resumoFiltros = useMemo(() => {
     const alunoSelecionado = alunosDisponiveis.find(
       (aluno) => String(aluno.id) === String(alunoFiltro)
@@ -226,8 +248,29 @@ export default function Relatorio() {
       await deleteRegistro(registroId);
       setRegistros((atual) => atual.filter((item) => item.id !== registroId));
     } catch (error) {
-      const mensagem = error?.response?.data?.message || error?.message || 'Não foi possível apagar o registro.';
+      const mensagem = error?.response?.data?.mensagem || error?.response?.data?.message || error?.message || 'Não foi possível apagar o registro.';
       window.alert(mensagem);
+    }
+  }
+
+  async function handleDeleteAllRegistros() {
+    const total = registros.length;
+    if (!total) return;
+
+    const confirmado = window.confirm(
+      `Tem certeza que deseja apagar todos os ${total} registros de entrada e saída? Esta ação não pode ser desfeita.`
+    );
+    if (!confirmado) return;
+
+    setExcluindoTodos(true);
+    try {
+      await deleteAllRegistros();
+      setRegistros([]);
+    } catch (error) {
+      const mensagem = error?.response?.data?.mensagem || error?.response?.data?.message || error?.message || 'Não foi possível apagar todos os registros.';
+      window.alert(mensagem);
+    } finally {
+      setExcluindoTodos(false);
     }
   }
 
@@ -281,11 +324,9 @@ export default function Relatorio() {
       });
     };
 
-    const drawTableRow = (row, y) => {
+    const valoresLinha = (row) => {
       const statusLabel = row.foraDoPadrao ? 'Fora do horário' : 'Dentro do horário';
-      const statusTextColor = row.foraDoPadrao ? [190, 24, 93] : [22, 101, 52];
-      const rowFill = row.foraDoPadrao ? [255, 241, 242] : [236, 253, 245];
-      const values = [
+      return [
         formatValue(row.crianca),
         formatValue(row.responsavel),
         formatValue(row.funcionario),
@@ -294,10 +335,20 @@ export default function Relatorio() {
         formatValue(row.dataHora),
         statusLabel,
       ];
+    };
 
+    const calcularAlturaLinha = (row) => {
+      const values = valoresLinha(row);
       const wrappedLines = values.map((value, index) => doc.splitTextToSize(value, colWidths[index] - 2.2));
       const maxLines = Math.max(...wrappedLines.map((lines) => lines.length));
-      const currentRowHeight = Math.max(rowHeight, 3.8 + maxLines * 2.6);
+      return Math.max(rowHeight, 3.8 + maxLines * 2.6);
+    };
+
+    const drawTableRow = (row, y) => {
+      const values = valoresLinha(row);
+      const currentRowHeight = calcularAlturaLinha(row);
+      const statusTextColor = row.foraDoPadrao ? [190, 24, 93] : [22, 101, 52];
+      const rowFill = row.foraDoPadrao ? [255, 241, 242] : [236, 253, 245];
 
       let cursorX = startX;
       values.forEach((value, index) => {
@@ -354,19 +405,35 @@ export default function Relatorio() {
     doc.text(filtrosTexto, 78, 57);
 
     let currentY = 66;
-    drawHeader(currentY);
-    currentY += headerHeight + 3;
-
-    registrosFiltrados.forEach((registro) => {
-      if (currentY + rowHeight > pageHeight - 12) {
-        doc.addPage();
-        currentY = 14;
+    gruposPorData.forEach((grupo) => {
+      const iniciarGrupo = () => {
+        doc.setFillColor(226, 237, 255);
+        doc.setDrawColor(203, 218, 245);
+        doc.roundedRect(startX, currentY, totalWidth, 8, 1.5, 1.5, 'FD');
+        doc.setTextColor(30, 64, 115);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8);
+        doc.text(grupo.titulo, startX + 2, currentY + 5.5);
+        currentY += 10;
         drawHeader(currentY);
         currentY += headerHeight + 3;
-      }
+      };
 
-      currentY += drawTableRow(registro, currentY);
-      currentY += 1.2;
+      if (currentY + 22 > pageHeight - 12) {
+        doc.addPage();
+        currentY = 14;
+      }
+      iniciarGrupo();
+
+      grupo.registros.forEach((registro) => {
+        const alturaLinha = calcularAlturaLinha(registro);
+        if (currentY + alturaLinha > pageHeight - 12) {
+          doc.addPage();
+          currentY = 14;
+          iniciarGrupo();
+        }
+        currentY += drawTableRow(registro, currentY) + 1.2;
+      });
     });
 
     if (registrosFiltrados.length === 0) {
@@ -525,14 +592,27 @@ export default function Relatorio() {
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
-              <button type="button" className="button button--secondary" onClick={exportarPdf}>
+              <button type="button" className="button button--secondary" onClick={exportarPdf} disabled={!registrosFiltrados.length}>
                 Baixar PDF
+              </button>
+              <button
+                type="button"
+                className="button button--danger"
+                onClick={handleDeleteAllRegistros}
+                disabled={!registros.length || excluindoTodos}
+              >
+                {excluindoTodos ? 'Apagando registros...' : 'Apagar todos os registros'}
               </button>
             </div>
 
-            <div style={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid #e5e7eb' }}>
-              <Table
-                columns={[
+            {gruposPorData.length ? gruposPorData.map((grupo) => (
+              <section key={grupo.data} style={{ marginBottom: '20px' }}>
+                <h2 style={{ margin: '0 0 10px', padding: '12px 16px', borderRadius: '12px', background: '#eef5ff', color: '#1f3b70', fontSize: '1.1rem' }}>
+                  Dia {grupo.titulo}
+                </h2>
+                <div style={{ borderRadius: '16px', overflow: 'hidden', border: '1px solid #e5e7eb' }}>
+                  <Table
+                    columns={[
                   { key: 'crianca', label: 'Criança' },
                   { key: 'responsavel', label: 'Responsável' },
                   { key: 'funcionario', label: 'Funcionário' },
@@ -571,19 +651,23 @@ export default function Relatorio() {
                       </button>
                     ),
                   },
-                ]}
-                rows={registrosFiltrados}
-                emptyMessage={erroRegistros || 'Ainda não existem registros para exibir.'}
-                getRowStyle={(registro) =>
-                  registro.foraDoPadrao
-                    ? {
-                        backgroundColor: '#fff5f5',
-                        boxShadow: 'inset 3px 0 0 #e53e3e',
-                      }
-                    : undefined
-                }
-              />
-            </div>
+                    ]}
+                    rows={grupo.registros}
+                    emptyMessage={erroRegistros || 'Ainda não existem registros para exibir.'}
+                    getRowStyle={(registro) =>
+                      registro.foraDoPadrao
+                        ? {
+                            backgroundColor: '#fff5f5',
+                            boxShadow: 'inset 3px 0 0 #e53e3e',
+                          }
+                        : undefined
+                    }
+                  />
+                </div>
+              </section>
+            )) : (
+              <div className="empty-state">{erroRegistros || 'Ainda não existem registros para exibir.'}</div>
+            )}
           </section>
         </main>
       </div>

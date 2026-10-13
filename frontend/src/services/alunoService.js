@@ -30,8 +30,13 @@ export async function uploadDocumento(id, arquivo) {
   form.append('arquivo', arquivo);
 
   const response = await api.post(`/criancas/${id}/documento`, form);
+  const documentoSalvo = unwrapResponse(response);
 
-  return unwrapResponse(response);
+  if (!documentoSalvo?.documentoPath) {
+    throw new Error('O servidor não confirmou a gravação do documento.');
+  }
+
+  return documentoSalvo;
 }
 
 export async function deleteDocumento(id) {

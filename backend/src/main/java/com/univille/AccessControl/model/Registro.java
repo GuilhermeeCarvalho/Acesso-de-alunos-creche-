@@ -3,6 +3,7 @@ package com.univille.AccessControl.model;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -34,6 +35,9 @@ public class Registro {
     @ManyToOne
     @JoinColumn(name = "responsavel_id")
     private Responsavel responsavel;
+
+    @Column(name = "responsavel_outro", nullable = false, columnDefinition = "boolean default false")
+    private boolean responsavelOutro = false;
 
     @ManyToOne
     @JoinColumn(name = "funcionario_id")
