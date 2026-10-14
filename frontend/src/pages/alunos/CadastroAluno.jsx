@@ -50,7 +50,6 @@ export default function CadastroAluno() {
   const [precisaPlantao, setPrecisaPlantao] = useState(false);
   const [plantaoTurno, setPlantaoTurno] = useState('');
   const [horarioPlantao, setHorarioPlantao] = useState('');
-  const [turno, setTurno] = useState('');
   const [arquivoDocumento, setArquivoDocumento] = useState(null);
   const turmaDoFormulario = creatingTurma ? novaTurma.trim() : turma.trim();
 
@@ -149,7 +148,6 @@ export default function CadastroAluno() {
         nome: nomeLimpo,
         turma: turmaFinal,
         precisaPlantao: false,
-        turno: turno.trim() || null,
         plantaoTurno: precisaPlantao ? plantaoTurno : null,
         horarioPlantao: precisaPlantao ? horarioPlantao : null,
       });
@@ -188,7 +186,6 @@ export default function CadastroAluno() {
       setPrecisaPlantao(false);
       setPlantaoTurno('');
       setHorarioPlantao('');
-      setTurno('');
       setArquivoDocumento(null);
     } catch (err) {
       setError(formatApiError(err, 'Não foi possível cadastrar o aluno. Verifique os dados e tente novamente.'));
@@ -261,19 +258,6 @@ export default function CadastroAluno() {
                       style={{ marginTop: '8px' }}
                     />
                   )}
-                </div>
-
-                <div className="field">
-                  <label htmlFor="aluno-turno">Turno</label>
-                  <select
-                    id="aluno-turno"
-                    value={turno}
-                    onChange={(event) => setTurno(event.target.value)}
-                  >
-                    <option value="">Selecione o turno</option>
-                    <option value="Vespertino">Vespertino</option>
-                    <option value="Matutino">Matutino</option>
-                  </select>
                 </div>
 
                 <div className="field field--full">

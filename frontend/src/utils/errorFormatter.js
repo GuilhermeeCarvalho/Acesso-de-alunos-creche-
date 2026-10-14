@@ -62,16 +62,16 @@ export function formatApiError(err, fallback = 'Não foi possível concluir a op
 
   const lowerMess = directMessage.toLowerCase();
 
+  if (lowerMess.includes('email')) {
+    return 'Este e-mail já está cadastrado. Use outro endereço para continuar.';
+  }
+
   if (lowerMess.includes('já existe') || lowerMess.includes('ja existe')) {
     return 'Já existe um cadastro com esse valor. Verifique e tente outro.';
   }
 
   if (lowerMess.includes('telefone')) {
     return 'Telefone inválido. Use DDD + 9 dígitos. Ex.: 47 997285634.';
-  }
-
-  if (lowerMess.includes('email')) {
-    return 'Este e-mail já está cadastrado. Use outro endereço para continuar.';
   }
 
   if (lowerMess.includes('senha')) {

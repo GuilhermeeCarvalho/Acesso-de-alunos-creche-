@@ -1,0 +1,127 @@
+{
+  "planHash": "14eb3c6b0f647d3f34222363dfcbf2a4ca87d317beb55cee8ef02bf95f922b08",
+  "phase": "standalone",
+  "recordedAtUtc": "2026-10-14T03:21:56.9330370Z",
+  "retryCount": 1,
+  "resetBaseline": false,
+  "complete": true,
+  "result": {
+    "setupSucceeded": true,
+    "setupDurationMs": 0,
+    "setupFailureOutput": null,
+    "assertions": [
+      {
+        "name": "frontend-build",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E frontend@0.0.0 build\r\n\u003E vite build\r\n\r\n\u001B[36mvite v8.0.3 \u001B[32mbuilding client environment for production...\u001B[36m\u001B[39m\r\n\u001B[2K\r\ntransforming...\u2713 326 modules transformed.\r\nrendering chunks...\r\ncomputing gzip size...\r\ndist/index.html                          0.41 kB \u2502 gzip:   0.28 kB\r\ndist/assets/index-CEOZZQfG.css          11.88 kB \u2502 gzip:   3.23 kB\r\ndist/assets/purify.es-DLRRNDFG.js       24.94 kB \u2502 gzip:   9.78 kB\r\ndist/assets/index.es-88NhhYWc.js       151.38 kB \u2502 gzip:  48.87 kB\r\ndist/assets/html2canvas--hRUFUPQ.js    199.56 kB \u2502 gzip:  46.78 kB\r\ndist/assets/index-zkXsO42p.js        1,134.25 kB \u2502 gzip: 352.89 kB\r\n\r\n\u001B[32m\u2713 built in 1.06s\u001B[39m\r\n\u001B[33m[plugin builtin:vite-reporter] \r\n(!) Some chunks are larger than 500 kB after minification. Consider:\r\n- Using dynamic import() to code-split the application\r\n- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting\r\n- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.\u001B[39m\r\n",
+        "durationMs": 2613
+      },
+      {
+        "name": "frontend-lint",
+        "kind": "process",
+        "verificationMethod": "exit-code",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E frontend@0.0.0 lint\r\n\u003E eslint .\r\n\r\n",
+        "durationMs": 4670
+      },
+      {
+        "name": "tests-pass",
+        "kind": "process",
+        "verificationMethod": "test-results",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": 0,
+        "outputSample": "\r\n\u003E frontend@0.0.0 test\r\n\u003E node --test --test-reporter=tap\r\n\r\nTAP version 13\r\n# Subtest: formats validation errors from nested field map\r\nok 1 - formats validation errors from nested field map\r\n  ---\r\n  duration_ms: 1.1455\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: formats duplicate email errors with a friendly text\r\nok 2 - formats duplicate email errors with a friendly text\r\n  ---\r\n  duration_ms: 0.2405\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: uses 08:15 and 16:15 as exact normal schedule times\r\nok 3 - uses 08:15 and 16:15 as exact normal schedule times\r\n  ---\r\n  duration_ms: 1.9177\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: checks morning plantao entry against the selected inclusive time range\r\nok 4 - checks morning plantao entry against the selected inclusive time range\r\n  ---\r\n  duration_ms: 0.5538\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: checks afternoon plantao exit against the selected inclusive time range\r\nok 5 - checks afternoon plantao exit against the selected inclusive time range\r\n  ---\r\n  duration_ms: 0.3387\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: uses the normal schedule for the other movement of a plantao student\r\nok 6 - uses the normal schedule for the other movement of a plantao student\r\n  ---\r\n  duration_ms: 0.3964\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: formats phone input as area code and nine-digit mobile number\r\nok 7 - formats phone input as area code and nine-digit mobile number\r\n  ---\r\n  duration_ms: 1.445\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: normalizes an existing eight-digit phone by adding the mobile prefix\r\nok 8 - normalizes an existing eight-digit phone by adding the mobile prefix\r\n  ---\r\n  duration_ms: 0.2819\r\n  type: \u0027test\u0027\r\n  ...\r\n# Subtest: requires an area code and a mobile number starting with 9\r\nok 9 - requires an area code and a mobile number starting with 9\r\n  ---\r\n  duration_ms: 0.4504\r\n  type: \u0027test\u0027\r\n  ...\r\n1..9\r\n# tests 9\r\n# suites 0\r\n# pass 9\r\n# fail 0\r\n# cancelled 0\r\n# skipped 0\r\n# todo 0\r\n# duration_ms 218.4156\r\n",
+        "durationMs": 1031,
+        "testResults": {
+          "testFramework": "unknown",
+          "runnerDetectedFrom": "none",
+          "testsTotal": 0,
+          "testsPassed": 0,
+          "testsFailed": 0,
+          "testsSkipped": 0,
+          "parseFailed": true
+        }
+      },
+      {
+        "name": "login-route-serves",
+        "kind": "http-probe",
+        "verificationMethod": "http-status",
+        "passed": true,
+        "timedOut": false,
+        "skipped": false,
+        "skippedReason": null,
+        "exitCode": null,
+        "outputSample": "HTTP 200\n\u003C!DOCTYPE html\u003E\r\n\u003Chtml lang=\u0022pt-br\u0022\u003E\r\n  \u003Chead\u003E\n    \u003Cscript type=\u0022module\u0022\u003Eimport { injectIntoGlobalHook } from \u0022/@react-refresh\u0022;\ninjectIntoGlobalHook(window);\nwindow.$RefreshReg$ = () =\u003E {};\nwindow.$RefreshSig$ = () =\u003E (type) =\u003E type;\u003C/script\u003E\n\n    \u003Cscript type=\u0022module\u0022 src=\u0022/@vite/client\u0022\u003E\u003C/script\u003E\n\r\n    \u003Cmeta charset=\u0022UTF-8\u0022 /\u003E\r\n    \u003Cmeta name=\u0022viewport\u0022 content=\u0022width=device-width, initial-scale=1.0\u0022 /\u003E\r\n    \u003Ctitle\u003EMeu Projeto\u003C/title\u003E\r\n  \u003C/head\u003E\r\n  \u003Cbody\u003E\r\n\r\n    \u003Cdiv id=\u0022root\u0022\u003E\u003C/div\u003E\r\n\r\n    \u003Cscript type=\u0022module\u0022 src=\u0022/src/main.jsx\u0022\u003E\u003C/script\u003E\r\n  \u003C/body\u003E\r\n\u003C/html\u003E\n--- server output ---\n\r\n\u003E frontend@0.0.0 dev\r\n\u003E vite --host 0.0.0.0 --host 127.0.0.1 --port 5187 --strictPort\r\n\r\n\r\n  \u001B[32m\u001B[1mVITE\u001B[22m v8.0.3\u001B[39m  \u001B[2mready in \u001B[0m\u001B[1m401\u001B[22m\u001B[2m\u001B[0m ms\u001B[22m\r\n\r\n  \u001B[32m\u279C\u001B[39m  \u001B[1mLocal\u001B[22m:   \u001B[36mhttp://127.0.0.1:\u001B[1m5187\u001B[22m/\u001B[39m\r\n",
+        "durationMs": 1596
+      }
+    ],
+    "executions": [
+      {
+        "source": "frontend-build",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "build"
+        ],
+        "cwd": "C:\\Users\\sandr\\Documents\\Acesso-de-alunos-creche-\\frontend",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "frontend-lint",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "lint"
+        ],
+        "cwd": "C:\\Users\\sandr\\Documents\\Acesso-de-alunos-creche-\\frontend",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "tests-pass",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "test"
+        ],
+        "cwd": "C:\\Users\\sandr\\Documents\\Acesso-de-alunos-creche-\\frontend",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      },
+      {
+        "source": "login-route-serves",
+        "resolvedExecutable": "C:\\Program Files\\nodejs\\npm.CMD",
+        "args": [
+          "run",
+          "dev",
+          "--",
+          "--host",
+          "127.0.0.1",
+          "--port",
+          "5187",
+          "--strictPort"
+        ],
+        "cwd": "C:\\Users\\sandr\\Documents\\Acesso-de-alunos-creche-\\frontend",
+        "env": {},
+        "prependPath": [],
+        "platform": "win32"
+      }
+    ]
+  }
+}

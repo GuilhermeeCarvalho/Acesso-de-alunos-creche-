@@ -34,7 +34,7 @@ function CadastroAlunos() {
     try {
       const turmaFinal = creatingTurma ? novaTurma.trim() : turma;
 
-      const response = await axios.post('http://localhost:8000/index.php', {
+      await axios.post('http://localhost:8000/index.php', {
         nome,
         turma: turmaFinal
       });

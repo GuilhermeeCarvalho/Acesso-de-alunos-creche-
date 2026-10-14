@@ -22,6 +22,41 @@ function formatarRelacao(relacao) {
   return relacaoResponsavelLabels[relacao] || 'Sem relação';
 }
 
+function formatarFaixaHorario(horario) {
+  if (!horario) return 'não informado';
+  return horario.replace('-', ' até ');
+}
+
+function alunoPrecisaPlantao(aluno) {
+  return Boolean(aluno?.precisaPlantao || aluno?.documentoPath);
+}
+
+function obterDescricaoHorarioAluno(aluno) {
+  if (!aluno) {
+    return '';
+  }
+
+  if (aluno.precisaPlantao && aluno.plantaoTurno && aluno.horarioPlantao) {
+    const tipoMovimentacao = aluno.plantaoTurno === 'Matutino' ? 'entrada' : 'saída';
+
+    return `Plantão cadastrado: ${aluno.plantaoTurno.toLowerCase()} — ${tipoMovimentacao} no horário ${formatarFaixaHorario(aluno.horarioPlantao)}.`;
+  }
+
+  if (aluno.turno === 'Integral') {
+    return 'Turno integral: permanência com entrada às 08:15 e saída às 16:15.';
+  }
+
+  if (aluno.turno === 'Matutino') {
+    return 'Turno matutino: entrada às 08:15 e saída às 16:15.';
+  }
+
+  if (aluno.turno === 'Vespertino') {
+    return 'Turno vespertino: entrada às 08:15 e saída às 16:15.';
+  }
+
+  return 'Horário padrão da creche: entrada às 08:15 e saída às 16:15.';
+}
+
 function CameraIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -212,10 +247,10 @@ export default function EntradaSaida() {
               setCriancaId(String(alunoId));
               setResponsavelId('');
               setError('');
-              setMessage(`Criança identificada: ${alunoEncontrado.nome}. Agora selecione o responsável para concluir.`);
+              setMessage(`Aluno identificado: ${alunoEncontrado.nome}. Agora selecione o responsável para concluir.`);
               await fecharScanner();
             } catch {
-              setScannerError('QR Code inválido. Escaneie o QR gerado para a criança.');
+              setScannerError('QR Code inválido. Escaneie o QR gerado para o aluno.');
             }
           }
         );
@@ -257,19 +292,19 @@ export default function EntradaSaida() {
     }
 
     if (!criancaSelecionadaId || (!selecionouOutro && !responsavelSelecionadoId)) {
-      setError('Selecione a criança e o responsável para continuar.');
+      setError('Selecione o aluno e o responsável para continuar.');
       setMessage('');
       return;
     }
 
     if (!alunoSelecionado) {
-      setError('Selecione uma criança válida.');
+      setError('Selecione um aluno válido.');
       setMessage('');
       return;
     }
 
     if (!selecionouOutro && !responsaveis.some((responsavel) => Number(responsavel.responsavelId) === responsavelSelecionadoId)) {
-      setError('Selecione um responsável vinculado à criança escolhida.');
+      setError('Selecione um responsável vinculado ao aluno escolhido.');
       setMessage('');
       return;
     }
@@ -318,12 +353,12 @@ export default function EntradaSaida() {
           <Header
             eyebrow="Registros"
             title="Entrada e saída"
-            description="Registre a movimentação vinculando criança e responsável. O funcionário e o horário são capturados automaticamente pela API."
+            description="Registre a movimentação vinculando aluno e responsável. O funcionário e o horário são capturados automaticamente pela API."
           />
 
           <section className="panel" style={{ marginTop: '22px' }}>
             <div className="form-grid" style={{ marginBottom: '20px' }}>
-              <div className="field field--full">
+              <div className="field">
                 <label>Funcionário logado</label>
                 <input value={usuarioLogado} readOnly />
               </div>
@@ -332,17 +367,12 @@ export default function EntradaSaida() {
                 <label>Horário atual</label>
                 <input value={formatarDataHora(currentTime)} readOnly />
               </div>
-
-              <div className="field">
-                <label>Status da API</label>
-                <input value={loadingAlunos ? 'Carregando crianças...' : 'Pronto para registrar'} readOnly />
-              </div>
             </div>
 
             <form onSubmit={handleSubmit}>
               <div className="form-grid">
                 <div className="field">
-                  <label htmlFor="registro-crianca">Criança</label>
+                  <label htmlFor="registro-crianca">Aluno</label>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'stretch' }}>
                     <select
                       id="registro-crianca"
@@ -352,10 +382,10 @@ export default function EntradaSaida() {
                       required
                       style={{ flex: 1 }}
                     >
-                      <option value="">{loadingAlunos ? 'Carregando crianças...' : 'Selecione uma criança'}</option>
+                      <option value="">{loadingAlunos ? 'Carregando alunos...' : 'Selecione um aluno'}</option>
                       {alunos.map((aluno) => (
                         <option key={aluno.id} value={aluno.id}>
-                          {aluno.nome} {aluno.turma ? `- ${aluno.turma}` : ''}
+                          {aluno.nome} {aluno.turma ? `- ${aluno.turma}` : ''}{alunoPrecisaPlantao(aluno) ? ' (PLANTÃO)' : ''}
                         </option>
                       ))}
                     </select>
@@ -386,7 +416,7 @@ export default function EntradaSaida() {
                   >
                     <option value="">
                       {!criancaId
-                        ? 'Selecione a criança primeiro'
+                        ? 'Selecione o aluno primeiro'
                         : loadingResponsaveis
                           ? 'Carregando responsáveis...'
                           : responsaveis.length > 0
@@ -410,9 +440,10 @@ export default function EntradaSaida() {
                   </select>
                 </div>
 
-                {alunoSelecionado?.precisaPlantao && alunoSelecionado.plantaoTurno && alunoSelecionado.horarioPlantao && (
+                {alunoSelecionado && (
                   <div className="notice field--full">
-                    Horário de plantão cadastrado: {alunoSelecionado.plantaoTurno.toLowerCase()}, {alunoSelecionado.horarioPlantao.replace('-', ' até ')}.
+                    {alunoPrecisaPlantao(alunoSelecionado) && <strong>ALUNO COM PLANTÃO — </strong>}
+                    {obterDescricaoHorarioAluno(alunoSelecionado)}
                   </div>
                 )}
 
@@ -428,8 +459,8 @@ export default function EntradaSaida() {
                       ? 'Informe o nome de quem entregou ou buscou o aluno.'
                       : 'Ex.: aluno chegou acompanhado, houve atraso, retorno após atendimento...'}
                     rows={3}
-                    style={{ resize: 'vertical' }}
-                    required={responsavelId === 'OUTRO'}
+                      style={{ resize: 'vertical' }}
+                      required={responsavelId === 'OUTRO'}
                   />
                 </div>
               </div>
@@ -476,7 +507,7 @@ export default function EntradaSaida() {
             }}
           >
             <h3 style={{ marginTop: 0 }}>Ler QR Code</h3>
-            <p style={{ marginTop: '8px' }}>Aponte a câmera para o QR Code da criança. Após ler, selecione o responsável para concluir o registro.</p>
+            <p style={{ marginTop: '8px' }}>Aponte a câmera para o QR Code do aluno. Após ler, selecione o responsável para concluir o registro.</p>
 
             <div
               id="camera-reader"

@@ -1,7 +1,6 @@
-﻿import {
+import {
   createContext,
   useContext,
-  useEffect,
   useState
 } from "react";
 
@@ -39,16 +38,6 @@ export function AuthProvider({ children }) {
 
     return token ? { email, token, role } : null;
   });
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    const email = localStorage.getItem("email");
-    const role = localStorage.getItem("role") || decodeTokenRole(token);
-
-    if (token && !usuario) {
-      setUsuario({ email, token, role });
-    }
-  }, [usuario]);
 
   async function login(email, senha) {
     const params = new URLSearchParams();
@@ -105,6 +94,7 @@ export function AuthProvider({ children }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   return useContext(AuthContext);
 }

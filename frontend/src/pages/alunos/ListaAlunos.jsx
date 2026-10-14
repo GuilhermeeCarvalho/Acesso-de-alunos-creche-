@@ -6,7 +6,7 @@ import Header from '../../components/Header.jsx';
 import Navbar from '../../components/Navbar.jsx';
 import Sidebar from '../../components/Sidebar.jsx';
 import { listAlunos, updateAluno, deleteAluno, uploadDocumento, getDocumento, deleteDocumento } from '../../services/alunoService.js';
-import { listResponsaveisDaCrianca, createResponsavel, updateResponsavel, deleteResponsavel, deleteVinculo, updateVinculoRelacao } from '../../services/responsavelService.js';
+import { listResponsaveisDaCrianca, createResponsavel, updateResponsavel, deleteVinculo, updateVinculoRelacao } from '../../services/responsavelService.js';
 import { createVinculo } from '../../services/vinculoService.js';
 import { relacaoResponsavelLabels, relacaoResponsavelOptions } from '../../constants/responsaveis.js';
 import { formatApiError } from '../../utils/errorFormatter.js';
@@ -70,8 +70,6 @@ export default function ListaAlunos() {
 
     const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
     const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-
     // card size in mm (10cm x 6cm)
     const cardW = 100;
     const cardH = 60;
@@ -198,7 +196,6 @@ let qrSize = 34; // QR inside card
       id: aluno.id,
       nome: aluno.nome || '',
       turma: aluno.turma || '',
-      turno: aluno.turno || '',
       precisaPlantao: aluno.precisaPlantao || false,
       plantaoTurno: aluno.plantaoTurno || '',
       horarioPlantao: aluno.horarioPlantao || '',
@@ -279,7 +276,6 @@ let qrSize = 34; // QR inside card
       const payload = {
         nome: editingAluno.nome,
         turma: editingAluno.turma,
-        turno: editingAluno.turno?.trim() ? editingAluno.turno.trim() : null,
         precisaPlantao: !!editingAluno.precisaPlantao,
         plantaoTurno: editingAluno.precisaPlantao ? editingAluno.plantaoTurno : null,
         horarioPlantao: editingAluno.precisaPlantao ? editingAluno.horarioPlantao : null,
@@ -416,7 +412,6 @@ let qrSize = 34; // QR inside card
       setSelectedResponsavelId(null);
       await refreshAlunos();
     } catch (err) {
-      // eslint-disable-next-line no-console
       console.error(err);
       alert(formatApiError(err, 'Não foi possível excluir o responsável porque a criança precisa manter ao menos um responsável vinculado.'));
     }
@@ -503,7 +498,7 @@ let qrSize = 34; // QR inside card
                         <td>{aluno.turma}</td>
                         <td>
                           <div className="responsible-cards">
-                            {(aluno.responsaveis?.length ? aluno.responsaveis : []).map((responsavel, index) => {
+                            {(aluno.responsaveis?.length ? aluno.responsaveis : []).map((responsavel) => {
                               const responsavelId = responsavel.responsavelId ?? responsavel.id;
                               const chave = `${aluno.id}-${responsavelId}`;
                               const isOpen = selectedResponsavelId === chave;
@@ -732,14 +727,6 @@ let qrSize = 34; // QR inside card
                       </select>
                     </div>
 
-                    <div className="field">
-                      <label>Turno</label>
-                      <select value={editingAluno.turno || ''} onChange={(e) => setEditingAluno({ ...editingAluno, turno: e.target.value })}>
-                        <option value="">Selecione o turno</option>
-                        <option value="Vespertino">Vespertino</option>
-                        <option value="Matutino">Matutino</option>
-                      </select>
-                    </div>
                     <div className="field field--full">
                       <label>Precisa de Plantão?</label>
                       <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
