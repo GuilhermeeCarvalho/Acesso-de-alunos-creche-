@@ -1,6 +1,7 @@
 package com.univille.AccessControl.config;
 
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -13,11 +14,14 @@ public class DataLoader implements CommandLineRunner {
 
     private final FuncionarioRepository repository;
     private final BCryptPasswordEncoder passwordEncoder;
+    private final String fixedAdminPassword;
 
     public DataLoader(FuncionarioRepository repository,
-                      BCryptPasswordEncoder passwordEncoder) {
+                      BCryptPasswordEncoder passwordEncoder,
+                      @Value("${ADMIN_FIXED_PASSWORD}") String fixedAdminPassword) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
+        this.fixedAdminPassword = fixedAdminPassword;
     }
 
     @Override
@@ -25,8 +29,6 @@ public class DataLoader implements CommandLineRunner {
 
         boolean existeAdmin =
                 repository.findByEmail("admin@creche.com").isPresent();
-
-        String newAdminPassword = "Cr3ch3@N3id3";
 
         if (!existeAdmin) {
 
@@ -36,7 +38,7 @@ public class DataLoader implements CommandLineRunner {
             admin.setEmail("admin@creche.com");
 
             admin.setSenha(
-                    passwordEncoder.encode(newAdminPassword)
+                    passwordEncoder.encode(fixedAdminPassword)
             );
 
             admin.setRole(Role.ADMIN);
@@ -45,9 +47,8 @@ public class DataLoader implements CommandLineRunner {
 
             System.out.println("ADMIN PADRÃO CRIADO");
         } else {
-            // Atualiza a senha do admin para uma senha conhecida em ambiente de desenvolvimento
             repository.findByEmail("admin@creche.com").ifPresent(admin -> {
-                admin.setSenha(passwordEncoder.encode(newAdminPassword));
+                admin.setSenha(passwordEncoder.encode(fixedAdminPassword));
                 repository.save(admin);
                 System.out.println("ADMIN_PASSWORD_RESET");
             });

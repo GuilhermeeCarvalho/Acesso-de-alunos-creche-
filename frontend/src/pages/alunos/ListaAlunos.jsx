@@ -39,7 +39,6 @@ export default function ListaAlunos() {
   const [documentoModalUrl, setDocumentoModalUrl] = useState('');
   const [documentoModalNome, setDocumentoModalNome] = useState('');
   const [documentoModalPath, setDocumentoModalPath] = useState('');
-  const [documentoModalAlunoId, setDocumentoModalAlunoId] = useState(null);
   const [documentoModalLoading, setDocumentoModalLoading] = useState(false);
   const [newResponsavel, setNewResponsavel] = useState({ nome: '', telefone: '', relacao: 'RESPONSAVEL_LEGAL' });
   const [selectedAlunoId, setSelectedAlunoId] = useState(null);
@@ -214,7 +213,6 @@ let qrSize = 34; // QR inside card
 
       setDocumentoModalNome(aluno.nome || 'Documento');
       setDocumentoModalPath(documento.documentoPath || '');
-      setDocumentoModalAlunoId(aluno.id);
       setDocumentoModalUrl(documento.signedUrl);
       setDocumentoModalOpen(true);
     } catch (err) {
@@ -231,7 +229,6 @@ let qrSize = 34; // QR inside card
     setDocumentoModalUrl('');
     setDocumentoModalPath('');
     setDocumentoModalNome('');
-    setDocumentoModalAlunoId(null);
   }
 
   async function handleRemoveDocumento(alunoId, options = {}) {
@@ -664,11 +661,6 @@ let qrSize = 34; // QR inside card
                       <p style={{ margin: '6px 0 0', color: '#5f6c85', fontSize: '0.95rem' }}>{documentoModalPath}</p>
                     </div>
                     <div style={{ display: 'flex', gap: '8px' }}>
-                      {documentoModalAlunoId && (
-                        <button type="button" className="button button--danger button--small" onClick={() => handleRemoveDocumento(documentoModalAlunoId, { closeModal: true })}>
-                          Remover documento
-                        </button>
-                      )}
                       <button type="button" className="button button--secondary button--small" onClick={handleCloseDocumentoModal}>
                         Fechar
                       </button>

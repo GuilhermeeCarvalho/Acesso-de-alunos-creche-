@@ -3,13 +3,10 @@ services:
   # ==================== POSTGRESQLL ====================
   postgres:
     image: postgres:15-alpine
-    container_name: creche_db
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-creche}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_secure_2024}
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -27,30 +24,30 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: creche_backend
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-creche}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-postgres_secure_2024}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no arquivo .env}
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: org.postgresql.Driver
       SPRING_JPA_DATABASE_PLATFORM: org.hibernate.dialect.PostgreSQLDialect
       SPRING_JPA_HIBERNATE_DDL_AUTO: ${HIBERNATE_DDL_AUTO:-update}
       SPRING_JPA_SHOW_SQL: ${SPRING_JPA_SHOW_SQL:-false}
       JAVA_OPTS: -Xmx512m -Xms256m
+      ADMIN_FIXED_PASSWORD: ${ADMIN_FIXED_PASSWORD:?Defina ADMIN_FIXED_PASSWORD no arquivo .env}
+      JWT_SECRET: ${JWT_SECRET:?Defina JWT_SECRET no arquivo .env}
 
-      SUPABASE_URL: ${SUPABASE_URL}
-      SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY}
-      SUPABASE_BUCKET: ${SUPABASE_BUCKET}
+      SUPABASE_URL: ${SUPABASE_URL:?Defina SUPABASE_URL no arquivo .env}
+      SUPABASE_SERVICE_KEY: ${SUPABASE_SERVICE_KEY:?Defina SUPABASE_SERVICE_KEY no arquivo .env}
+      SUPABASE_BUCKET: ${SUPABASE_BUCKET:?Defina SUPABASE_BUCKET no arquivo .env}
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:5174,https://gerenciador-de-acesso-eight.vercel.app,https://gerenciador-de-acesso-e30osu1ol-sandriely-maciel-s-projects.vercel.app}
 
-    ports:
-      - "${BACKEND_PORT:-8080}:8080"
     depends_on:
       postgres:
         condition: service_healthy
     networks:
       - creche-network
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/ || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -64,18 +61,13 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: creche_frontend
-    environment:
-      - VITE_API_PROXY_TARGET=http://backend:8080
     ports:
-      - "${FRONTEND_PORT:-5173}:5173"
+      - "127.0.0.1:${FRONTEND_PORT:-5173}:8080"
     depends_on:
       - backend
     networks:
       - creche-network
     restart: unless-stopped
-    stdin_open: true
-    tty: true
 
 volumes:
   postgres_data:

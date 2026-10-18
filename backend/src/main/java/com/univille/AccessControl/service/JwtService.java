@@ -3,33 +3,42 @@ package com.univille.AccessControl.service;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Date;
 
 @Service
 public class JwtService {
 
-    private final String SECRET =
-            "minha_chave_super_secreta_com_mais_de_32_caracteres";
+    private static final Duration TOKEN_VALIDITY = Duration.ofHours(8);
 
-    private Key getKey() {
-        return Keys.hmacShaKeyFor(SECRET.getBytes());
+    private final Key signingKey;
+
+    public JwtService(@Value("${JWT_SECRET}") String secret) {
+        this.signingKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
     public String gerarToken(String email, String role) {
+        Instant issuedAt = Instant.now();
 
         return Jwts.builder()
                 .setSubject(email)
                 .claim("role", role)
-                .signWith(getKey())
+                .setIssuedAt(Date.from(issuedAt))
+                .setExpiration(Date.from(issuedAt.plus(TOKEN_VALIDITY)))
+                .signWith(signingKey)
                 .compact();
     }
 
     public String extrairEmail(String token) {
 
         Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getKey())
+                .setSigningKey(signingKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
@@ -40,7 +49,7 @@ public class JwtService {
     public String extrairRole(String token) {
 
         Claims claims = Jwts.parserBuilder()
-                .setSigningKey(getKey())
+                .setSigningKey(signingKey)
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
