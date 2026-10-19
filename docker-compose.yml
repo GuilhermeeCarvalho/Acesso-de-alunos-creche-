@@ -3,6 +3,7 @@ services:
   # ==================== POSTGRESQLL ====================
   postgres:
     image: postgres:15-alpine
+    container_name: creche_db
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-creche}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
@@ -24,6 +25,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+    container_name: creche_backend
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-creche}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-postgres}
@@ -61,6 +63,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+    container_name: creche_frontend
     ports:
       - "127.0.0.1:${FRONTEND_PORT:-5173}:8080"
     depends_on:
